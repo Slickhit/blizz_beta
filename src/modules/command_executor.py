@@ -1,20 +1,16 @@
 import os
 import subprocess
+import shlex
 
 def execute_command(command):
-    """Execute shell commands securely."""
-    restricted_commands = ["rm", "shutdown", "reboot"]
+    """Secure command execution using a whitelist approach."""
+    allowed_commands = ["ls", "pwd", "whoami", "df", "free", "uptime", "echo", "cat"]
 
-    if any(cmd in command for cmd in restricted_commands):
+    # Prevent command injection
+    command_parts = shlex.split(command)
+
+    if command_parts[0] not in allowed_commands:
         return "Error: Command not allowed."
-
-    if command.startswith("cd"):
-        try:
-            path = command.split(" ", 1)[1]
-            os.chdir(path)
-            return f"Changed directory to {os.getcwd()}"
-        except Exception as e:
-            return f"Error changing directory: {e}"
 
     try:
         result = subprocess.run(command, shell=True, capture_output=True, text=True)
