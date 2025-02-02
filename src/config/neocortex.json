@@ -1,0 +1,30 @@
+{
+    "memory_limit": 10,
+    "enable_commands": true,
+    "greeting_message": "dynamic", 
+    "restricted_commands": ["rm", "shutdown", "reboot"],
+    "model": "gpt-4o",
+    "log_level": "debug",
+    "conversation_tone": "engaging",
+    "memory_retrieval": {
+        "strategy": "relevant",
+        "keywords_priority": true,
+        "recent_limit": 5
+    },
+    "conversation_pacing": {
+        "mode": "dynamic",
+        "encourage_depth": true,
+        "detect_repetition": true
+    },
+    "meta_bot": {
+        "name": "Neuron",
+        "role": "Internal advisor",
+        "purpose": "Filter memory, suggest pacing, refine response strategy",
+        "guidelines": {
+            "memory_filter": "Retrieve only relevant topics from the last 5 interactions",
+            "pacing_suggestions": "Encourage deeper discussions, detect if Rafael repeats a topic",
+            "response_tone": "Engaging but concise",
+            "generate_greeting": true
+        }
+    }
+}

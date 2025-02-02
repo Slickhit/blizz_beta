@@ -1,0 +1,11 @@
+# Ignore environment files
+.env
+
+# Ignore virtual environment
+venv/
+venv/
+venv/
+logs/
+__pycache__/
+self_backup/
+
