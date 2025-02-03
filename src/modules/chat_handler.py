@@ -4,6 +4,7 @@ from langchain_openai import ChatOpenAI
 from config.config_loader import load_neocortex_config
 from modules.memory_handler import retrieve_processed_memory, neuron_advice, process_memory
 from models.custom_memory import CustomMemory
+from modules.command_executor import execute_command
 
 memory = CustomMemory()
 
@@ -42,8 +43,7 @@ def chat_loop():
     last_memory_process = time.time()
 
     # Print a dynamic greeting
-    greeting = random.choice(greetings)
-    print("[NEURAL-BOT] >>", greeting)
+    print("[NEURAL-BOT] >> BlizzNetic online—what’s up?")
 
     while True:
         user_input = input("[SYSTEM_OPERATOR] >> ")
@@ -51,7 +51,13 @@ def chat_loop():
             print("[NEURAL-BOT] >> Exiting secure terminal. Goodbye!")
             break
 
-        bot_response = handle_user_input(user_input)
+        # ✅ Ensure system commands are detected
+        if user_input.startswith("!"):
+            command = user_input[1:].strip()  # Remove "!" and extra spaces
+            bot_response = execute_command(command)
+        else:
+            bot_response = handle_user_input(user_input)
+
         exchange_count += 1
 
         # Process memory every 3 exchanges OR every 60 seconds
