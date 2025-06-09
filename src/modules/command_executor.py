@@ -13,7 +13,7 @@ def execute_command(command):
     """Secure command execution using a whitelist approach."""
     allowed_commands = ["ls", "pwd", "whoami", "df", "free", "uptime", "echo", "cat", "self_improve"]
 
-    command_parts = command.split()
+    command_parts = shlex.split(command)
 
     print(f"[DEBUG] Command received: {command_parts[0]}")  # ✅ Debugging print
     print(f"[DEBUG] Allowed commands: {allowed_commands}")  # ✅ Debugging print
@@ -29,7 +29,8 @@ def execute_command(command):
         return self_improve.self_improve_code(command_parts[1])
 
     try:
-        result = subprocess.run(command, shell=True, capture_output=True, text=True)
+        # Use a list of arguments and disable shell to avoid command injection
+        result = subprocess.run(command_parts, shell=False, capture_output=True, text=True)
         return result.stdout.strip() or result.stderr.strip()
     except Exception as e:
         return f"Command execution error: {e}"
