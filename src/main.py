@@ -4,6 +4,7 @@ from modules.memory_handler import process_memory
 from modules.chat_handler import chat_loop
 
 def main():
+    init_environment()
     display_interface()
     process_memory()
     chat_loop()

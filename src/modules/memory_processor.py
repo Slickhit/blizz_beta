@@ -1,8 +1,11 @@
 import os
 import json
+import logging
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from models.custom_memory import CustomMemory
+
+logger = logging.getLogger(__name__)
 
 # Load environment variables from .env file
 load_dotenv()
@@ -23,7 +26,7 @@ def load_raw_memory():
     try:
         return memory.load_memory()
     except Exception as e:
-        print(f"Error loading memory: {e}")
+        logger.error("Error loading memory: %s", e)
         return {}
 
 
@@ -34,7 +37,7 @@ def process_memory():
     """
     raw_memory = load_raw_memory()
     if not raw_memory:
-        print("No memory found to process.")
+        logger.info("No memory found to process.")
         return
 
     # Wrap list memory into a dictionary if needed.
@@ -73,7 +76,7 @@ Conversation:
     with open(PROCESSED_MEMORY_FILE, "w") as f:
         json.dump(structured_data, f, indent=4)
 
-    print("Memory successfully processed and stored.")
+    logger.info("Memory successfully processed and stored.")
 
 
 def retrieve_processed_memory():
@@ -84,7 +87,7 @@ def retrieve_processed_memory():
         with open(PROCESSED_MEMORY_FILE, "r") as f:
             return json.load(f)
     except FileNotFoundError:
-        print("No processed memory found.")
+        logger.warning("No processed memory found.")
         return {}
 
 

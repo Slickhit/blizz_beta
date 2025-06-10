@@ -1,6 +1,9 @@
 import os
 import subprocess
 import shlex
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def lazy_import_self_improvement():
@@ -15,8 +18,8 @@ def execute_command(command):
 
     command_parts = command.split()
 
-    print(f"[DEBUG] Command received: {command_parts[0]}")  # ✅ Debugging print
-    print(f"[DEBUG] Allowed commands: {allowed_commands}")  # ✅ Debugging print
+    logger.debug("Command received: %s", command_parts[0])
+    logger.debug("Allowed commands: %s", allowed_commands)
 
     if command_parts[0] not in allowed_commands:
         return f"Error: Command '{command_parts[0]}' not allowed."
@@ -32,6 +35,7 @@ def execute_command(command):
         result = subprocess.run(command, shell=True, capture_output=True, text=True)
         return result.stdout.strip() or result.stderr.strip()
     except Exception as e:
+        logger.error("Command execution error: %s", e)
         return f"Command execution error: {e}"
 
 
@@ -41,10 +45,12 @@ def read_own_code(filepath):
     target_path = os.path.join(base_dir, filepath)
 
     if not os.path.exists(target_path):
+        logger.error("File not found: %s", filepath)
         return f"Error: {filepath} not found."
 
     try:
         with open(target_path, "r", encoding="utf-8") as f:
             return f.read()
     except Exception as e:
+        logger.error("Error reading file %s: %s", filepath, e)
         return f"Error reading file: {e}"
