@@ -13,7 +13,13 @@ def execute_command(command):
     """Secure command execution using a whitelist approach."""
     allowed_commands = ["ls", "pwd", "whoami", "df", "free", "uptime", "echo", "cat", "self_improve"]
 
-    command_parts = command.split()
+    try:
+        command_parts = shlex.split(command)
+    except ValueError as e:
+        return f"Error parsing command: {e}"
+
+    if not command_parts:
+        return "Error: No command provided."
 
     print(f"[DEBUG] Command received: {command_parts[0]}")  # ✅ Debugging print
     print(f"[DEBUG] Allowed commands: {allowed_commands}")  # ✅ Debugging print
@@ -28,8 +34,12 @@ def execute_command(command):
         self_improve = lazy_import_self_improvement()  # ✅ Import only when needed
         return self_improve.self_improve_code(command_parts[1])
 
+    for arg in command_parts[1:]:
+        if any(symbol in arg for symbol in [';', '&', '|', '$', '>', '<']):
+            return "Error: Invalid characters in arguments."
+
     try:
-        result = subprocess.run(command, shell=True, capture_output=True, text=True)
+        result = subprocess.run(command_parts, shell=False, capture_output=True, text=True)
         return result.stdout.strip() or result.stderr.strip()
     except Exception as e:
         return f"Command execution error: {e}"
