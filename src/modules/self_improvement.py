@@ -1,7 +1,10 @@
 import os
 import subprocess
+import logging
 from langchain_openai import ChatOpenAI
 from modules.file_utils import read_own_code  # ✅ FIXED! Now correctly importing from file_utils.py
+
+logger = logging.getLogger(__name__)
 
 model = ChatOpenAI(model="gpt-4o")
 
@@ -36,7 +39,7 @@ The following is the existing Python code that needs improvement:
     with open("logs/ai_generated_code.py", "w", encoding="utf-8") as log_file:
         log_file.write(improved_code)
 
-    print("[DEBUG] AI-generated code saved to logs/ai_generated_code.py")  # ✅ Debugging
+    logger.debug("AI-generated code saved to logs/ai_generated_code.py")
 
     # ✅ Fix bad characters before processing
     improved_code = improved_code.replace("’", "'")  # Replace curly quotes with normal ones
@@ -46,7 +49,7 @@ The following is the existing Python code that needs improvement:
     try:
         compile(improved_code, "<string>", 'exec')  # Check for syntax errors
     except SyntaxError as e:
-        print("[DEBUG] AI-generated code caused a syntax error at line:", e.lineno)
+        logger.debug("AI-generated code caused a syntax error at line: %s", e.lineno)
         return f"Error: AI-generated code has syntax errors! {e}"
 
     return modify_own_code(file_path, improved_code)
@@ -69,6 +72,7 @@ def create_and_execute_script(script_name, script_content):
         return result.stdout.strip() or result.stderr.strip()
 
     except Exception as e:
+        logger.error("Error executing script %s: %s", script_name, e)
         return f"Error executing script: {e}"
 
 
@@ -78,6 +82,7 @@ def modify_own_code(filepath, new_code):
     target_path = os.path.join(base_dir, filepath)
 
     if not os.path.exists(target_path):
+        logger.error("File not found: %s", filepath)
         return f"Error: {filepath} not found."
 
     try:
@@ -85,4 +90,5 @@ def modify_own_code(filepath, new_code):
             f.write(new_code)
         return f"Successfully updated {filepath}."
     except Exception as e:
+        logger.error("Error writing file %s: %s", filepath, e)
         return f"Error writing file: {e}"

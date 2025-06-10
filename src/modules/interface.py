@@ -1,5 +1,8 @@
 import os
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 # ANSI escape codes for colors and styles
 RESET   = "\033[0m"
@@ -12,13 +15,13 @@ MAGENTA = "\033[95m"
 def load_interface_config(filepath):
     """Load interface configuration from a JSON file."""
     if not os.path.exists(filepath):
-        print(f"Configuration file '{filepath}' not found.")
+        logger.error("Configuration file '%s' not found.", filepath)
         return {}
     try:
         with open(filepath, "r", encoding="utf-8") as file:
             return json.load(file)
     except Exception as e:
-        print(f"Error loading interface config: {e}")
+        logger.error("Error loading interface config: %s", e)
         return {}
 
 def print_separator():
