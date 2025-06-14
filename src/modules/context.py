@@ -1,3 +1,4 @@
+"""Track the last executed shell command for contextual replies."""
 import time
 
 last_command = None
