@@ -3,6 +3,18 @@
     "enable_commands": true,
     "system_goal": "Provide a helpful terminal assistant for security tasks",
     "greeting_message": "dynamic", 
+    "allowed_commands": [
+        "ls",
+        "pwd",
+        "whoami",
+        "df",
+        "free",
+        "uptime",
+        "echo",
+        "cat",
+        "self_improve",
+        "scan"
+    ],
     "restricted_commands": ["rm", "shutdown", "reboot"],
     "model": "gpt-4o",
     "log_level": "debug",

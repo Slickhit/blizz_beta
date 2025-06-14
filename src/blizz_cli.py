@@ -23,7 +23,7 @@ def main() -> None:
     )
     scan_parser.add_argument(
         "--method",
-        choices=["default", "threader", "nmap"],
+        choices=["default", "threader", "nmap", "async"],
         default="default",
         help="Scanning method to use",
     )

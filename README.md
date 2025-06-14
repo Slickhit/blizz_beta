@@ -5,11 +5,12 @@ Blizz Beta is a simple terminal-based chat assistant that stores conversation hi
 ## Setup
 
 1. Create and activate a Python 3 virtual environment (optional but recommended).
-2. Install dependencies from `requirements.txt`:
+2. Install dependencies (or install the package):
    ```bash
-   pip install -r requirements.txt
+   pip install -e .
    ```
-   The requirements currently include `langchain-openai` and `python-dotenv`.
+   This installs `blizz` as a command line tool along with its
+   dependencies (`langchain-openai` and `python-dotenv`).
 
 Environment variables can be defined in a `.env` file and are loaded automatically when the application starts.
 
@@ -32,7 +33,7 @@ Within the chat you can trigger the same scanner by prefixing the command with
 an exclamation mark:
 
 ```text
-!scan <target> [--ports 80,443] [--method threader|nmap]
+!scan <target> [--ports 80,443] [--method threader|nmap|async]
 ```
 
 After scanning, an interactive menu lets you display common service names or
@@ -40,8 +41,8 @@ basic recon tips for the detected ports. Use this only on systems you have
 explicit permission to test.
 
 The scanner now supports additional methods. Use `--method threader` to
-emulate the behaviour of the threader3000 project or `--method nmap` to invoke
-the `nmap` utility for more detailed results.
+emulate the behaviour of the threader3000 project, `--method nmap` to invoke
+the `nmap` utility, or `--method async` for an asyncio-based implementation.
 
 The script displays a welcome banner, processes any stored memory, and then enters a chat loop where you can interact with the bot. Type `exit` to leave the chat.
 
@@ -56,6 +57,21 @@ Several files control various aspects of the system:
 - `config.cfg` – example configuration for a spaCy training pipeline (not required to run the chat bot).
 
 Adjust these files to customise how the bot behaves or how memory is handled.
+
+## Memory and Event Files
+
+The assistant stores conversation history and processing results in JSON files
+located under `src/models/`:
+
+- `memory.json` holds raw chat messages. Each entry has `user` and `bot`
+  fields.
+- `processed_memory.json` contains structured data extracted from the raw
+  history along with recent events.
+- `event_log.json` records command executions and system events. Each entry
+  includes a timestamp, type and details object.
+
+These files are rewritten as the bot runs and are safe to delete if you want to
+start fresh.
 
 ## Introspection Utilities
 

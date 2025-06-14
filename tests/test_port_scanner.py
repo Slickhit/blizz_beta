@@ -36,3 +36,13 @@ def test_threader_scan(monkeypatch):
         assert port in result
     finally:
         server.close()
+
+
+def test_async_scan(monkeypatch):
+    server, port = _start_dummy_server()
+    monkeypatch.setattr(port_scanner, "interactive_menu", lambda ports: None)
+    try:
+        result = port_scanner.scan_target("localhost", [port], method="async")
+        assert port in result
+    finally:
+        server.close()

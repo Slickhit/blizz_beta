@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "blizz-beta"
+version = "0.1.0"
+description = "Terminal chat assistant"
+readme = "README.md"
+authors = [{name = "Blizz"}]
+requires-python = ">=3.10"
+dependencies = [
+    "langchain-openai",
+    "python-dotenv",
+]
+
+[project.scripts]
+blizz = "blizz_cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+packages = ["modules", "config", "models"]

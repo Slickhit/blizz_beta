@@ -2,6 +2,7 @@ import socket
 import subprocess
 import threading
 import queue
+import asyncio
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Dict, Iterable, List, Tuple
 
@@ -71,6 +72,31 @@ def threader_scan(
     return sorted(open_ports)
 
 
+async def asyncio_scan(
+    target: str,
+    ports: Iterable[int] | None = None,
+    timeout: float = 0.5,
+) -> List[int]:
+    """Asynchronously scan ports using asyncio."""
+    if ports is None:
+        ports = range(1, 1025)
+
+    open_ports: List[int] = []
+
+    async def check(port: int) -> None:
+        try:
+            conn = asyncio.open_connection(target, port)
+            reader, writer = await asyncio.wait_for(conn, timeout=timeout)
+            writer.close()
+            await writer.wait_closed()
+            open_ports.append(port)
+        except Exception:
+            pass
+
+    await asyncio.gather(*(check(p) for p in ports))
+    return sorted(open_ports)
+
+
 def nmap_scan(target: str, ports: Iterable[int] | None = None) -> List[int]:
     """Run nmap to detect open ports. Returns list of ports or empty on error."""
     port_arg = ",".join(map(str, ports)) if ports else "1-1024"
@@ -118,6 +144,9 @@ def scan_target(
 
     if method == "threader":
         return threader_scan(target, ports, timeout, max_workers)
+
+    if method == "async":
+        return asyncio.run(asyncio_scan(target, ports, timeout))
 
     if ports is None:
         ports = range(1, 1025)
