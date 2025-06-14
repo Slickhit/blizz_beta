@@ -5,6 +5,7 @@ from config.config_loader import load_neocortex_config
 from modules.memory_handler import retrieve_processed_memory, neuron_advice, process_memory
 from models.custom_memory import CustomMemory
 from modules.command_executor import execute_command
+from modules import event_logger
 
 memory = CustomMemory()
 
@@ -24,6 +25,7 @@ def handle_user_input(user_input):
     """Process a single exchange and return the bot's response."""
     structured_memory = retrieve_processed_memory()
     conversation_history = structured_memory.get("conversation_history", [])
+    event_logger.log_event("user_input", {"text": user_input})
 
     # Get guidance from Neuron
     guidance = neuron_advice(user_input, conversation_history, load_neocortex_config())
@@ -34,6 +36,7 @@ def handle_user_input(user_input):
 
     # Save conversation context
     memory.save_context(user_input, response.content)
+    event_logger.log_event("bot_response", {"text": response.content})
     return response.content
 
 def chat_loop():
@@ -42,6 +45,8 @@ def chat_loop():
     process_frequency = 3  # Process memory every 3 exchanges
     last_memory_process = time.time()
 
+    event_logger.log_event("session_start")
+
     # Print a dynamic greeting
     print("[NEURAL-BOT] >> BlizzNetic online—what’s up?")
 
@@ -49,6 +54,7 @@ def chat_loop():
         user_input = input("[SYSTEM_OPERATOR] >> ")
         if user_input.lower() == "exit":
             print("[NEURAL-BOT] >> Exiting secure terminal. Goodbye!")
+            event_logger.log_event("session_end")
             break
 
         # ✅ Ensure system commands are detected
@@ -66,3 +72,4 @@ def chat_loop():
             last_memory_process = time.time()
 
         print("[NEURAL-BOT] >>", bot_response)
+        event_logger.log_event("exchange", {"count": exchange_count})

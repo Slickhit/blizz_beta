@@ -2,8 +2,13 @@ import os
 import json
 from models.custom_memory import CustomMemory
 from modules.memory_processor import process_memory, retrieve_processed_memory
+from modules.event_logger import load_events
 from models.custom_memory import CustomMemory
 memory = CustomMemory()
+
+def get_recent_events(limit):
+    events = load_events()[-limit:]
+    return "\n".join([f"{e.get('timestamp','')}: {e.get('type','')}" for e in events])
 
 def get_recent_conversation(history, limit):
     """Extract and format the last few messages from conversation history."""
@@ -15,6 +20,7 @@ def neuron_advice(user_input, conversation_history, config):
     meta_bot_config = config.get("meta_bot", {})
     recent_limit = config.get("memory_retrieval", {}).get("recent_limit", 5)
     recent_history = get_recent_conversation(conversation_history, recent_limit)
+    recent_events = get_recent_events(recent_limit)
     
     prompt = (
         f"You are {meta_bot_config.get('name', 'Neuron')}, an internal advisor.\n"
@@ -22,6 +28,7 @@ def neuron_advice(user_input, conversation_history, config):
         f"Your purpose: {meta_bot_config.get('purpose', 'Guide the main bot with memory filtering and pacing.')}\n\n"
         f"### Conversation History (last {recent_limit} messages):\n"
         f"{recent_history}\n\n"
+        f"### Recent Events:\n{recent_events}\n\n"
         f"User's latest input: {user_input}\n"
         "Provide guidance on how the main bot should respond, focusing on relevance, pacing, and engagement."
     )

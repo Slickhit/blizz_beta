@@ -6,19 +6,23 @@ import threading
 import modules.port_scanner as port_scanner
 
 import modules.command_executor as command_executor
+import modules.event_logger as event_logger
 
 
-def test_execute_command_valid():
+def test_execute_command_valid(tmp_path, monkeypatch):
+    monkeypatch.setattr(event_logger, "EVENT_LOG_FILE", str(tmp_path / "events.json"))
     output = command_executor.execute_command("echo hello")
     assert output.strip() == "hello"
 
 
-def test_execute_command_invalid():
+def test_execute_command_invalid(tmp_path, monkeypatch):
+    monkeypatch.setattr(event_logger, "EVENT_LOG_FILE", str(tmp_path / "events.json"))
     output = command_executor.execute_command("rm -rf /")
     assert "not allowed" in output
 
 
-def test_execute_command_path_traversal(tmp_path):
+def test_execute_command_path_traversal(tmp_path, monkeypatch):
+    monkeypatch.setattr(event_logger, "EVENT_LOG_FILE", str(tmp_path / "events.json"))
     secret_file = tmp_path / "secret.txt"
     secret_file.write_text("secret")
     rel_path = os.path.relpath(secret_file, os.getcwd())
@@ -36,7 +40,8 @@ def _start_dummy_server(host="localhost"):
     return server, port
 
 
-def test_execute_command_scan(monkeypatch):
+def test_execute_command_scan(monkeypatch, tmp_path):
+    monkeypatch.setattr(event_logger, "EVENT_LOG_FILE", str(tmp_path / "events.json"))
     server, port = _start_dummy_server()
     monkeypatch.setattr(port_scanner, "interactive_menu", lambda ports: None)
     try:

@@ -4,6 +4,7 @@ import logging
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from models.custom_memory import CustomMemory
+from modules.event_logger import load_events
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +39,7 @@ def process_memory():
     raw_memory = load_raw_memory()
     if not raw_memory:
         logger.info("No memory found to process.")
-        return
+        raw_memory = {"conversation_history": [], "preferences": {}}
 
     # Wrap list memory into a dictionary if needed.
     if isinstance(raw_memory, list):
@@ -69,7 +70,8 @@ Conversation:
     structured_data = {
         "personal_data": extracted_data.get("personal_data", {}),
         "preferences": raw_memory.get("preferences", {}),
-        "conversation_history": conversation_history
+        "conversation_history": conversation_history,
+        "events": load_events()[-50:],
     }
 
     # Save the processed memory.

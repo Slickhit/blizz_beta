@@ -2,6 +2,7 @@ import os
 import subprocess
 import shlex
 import logging
+from modules import event_logger
 
 logger = logging.getLogger(__name__)
 
@@ -27,30 +28,39 @@ def execute_command(command):
         "scan",
     ]
 
+    event_logger.log_event("command_received", {"command": command})
+
     try:
         command_parts = shlex.split(command)
     except ValueError as e:
+        event_logger.log_event("command_error", {"command": command, "error": str(e)})
         return f"Error parsing command: {e}"
 
     if not command_parts:
+        event_logger.log_event("command_error", {"command": command, "error": "no command"})
         return "Error: No command provided."
 
     logger.debug("Command received: %s", command_parts[0])
     logger.debug("Allowed commands: %s", allowed_commands)
 
     if command_parts[0] not in allowed_commands:
+        event_logger.log_event("command_blocked", {"command": command_parts[0]})
         return f"Error: Command '{command_parts[0]}' not allowed."
 
     # ✅ If `self_improve` is called, run the function
     if command_parts[0] == "self_improve":
         if len(command_parts) < 2:
+            event_logger.log_event("command_error", {"command": command, "error": "missing file"})
             return "Usage: self_improve <file_path>"
         self_improve = lazy_import_self_improvement()  # ✅ Import only when needed
-        return self_improve.self_improve_code(command_parts[1])
+        result = self_improve.self_improve_code(command_parts[1])
+        event_logger.log_event("self_improve", {"file": command_parts[1], "result": result})
+        return result
 
     if command_parts[0] == "scan":
         from modules import port_scanner  # Local import to avoid overhead
         if len(command_parts) < 2:
+            event_logger.log_event("command_error", {"command": command, "error": "missing target"})
             return "Usage: scan <target> [--ports 80,443] [--method METHOD]"
         target = command_parts[1]
         ports = None
@@ -78,17 +88,22 @@ def execute_command(command):
         else:
             msg = f"No open ports found on {target}"
         port_scanner.interactive_menu(open_ports)
+        event_logger.log_event("scan", {"target": target, "ports": open_ports})
         return msg
 
     for arg in command_parts[1:]:
         if any(symbol in arg for symbol in [';', '&', '|', '$', '>', '<']):
+            event_logger.log_event("command_error", {"command": command, "error": "invalid chars"})
             return "Error: Invalid characters in arguments."
 
     try:
         result = subprocess.run(command_parts, shell=False, capture_output=True, text=True)
-        return result.stdout.strip() or result.stderr.strip()
+        output = result.stdout.strip() or result.stderr.strip()
+        event_logger.log_event("command_executed", {"command": command_parts[0], "output": output})
+        return output
     except Exception as e:
         logger.error("Command execution error: %s", e)
+        event_logger.log_event("command_error", {"command": command_parts[0], "error": str(e)})
         return f"Command execution error: {e}"
 
 
