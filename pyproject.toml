@@ -6,6 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "blizz-beta"
 version = "0.1.0"
 description = "Terminal chat assistant"
+license = {file = "LICENSE"}
 readme = "README.md"
 authors = [{name = "Blizz"}]
 requires-python = ">=3.10"
