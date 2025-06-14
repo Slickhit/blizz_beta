@@ -49,7 +49,7 @@ The script displays a welcome banner, processes any stored memory, and then ente
 
 Several files control various aspects of the system:
 
-- `src/config/neocortex.json` – main configuration for the bot (model selection, memory limits, greeting behaviour, etc.).
+- `src/config/neocortex.json` – main configuration for the bot (model selection, memory limits, greeting behaviour, etc.). Set `"use_emoji": true` to append a friendly emoji to every reply.
 - `src/config/interface_config.json` – settings for the terminal interface such as the banner text and welcome message.
 - `src/models/memory.json` – raw conversation history saved across sessions.
 - `src/models/processed_memory.json` – structured data produced by the memory processor.
