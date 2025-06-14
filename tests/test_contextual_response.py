@@ -8,6 +8,16 @@ def test_generate_contextual_response_pwd():
     assert "/home/user" in resp
 
 
+def test_context_timestamp_reset():
+    context.set_last("pwd", "/home/user")
+    _, _, ts1 = context.get_last()
+    assert isinstance(ts1, float)
+
+    context.set_last(None, None)
+    _, _, ts2 = context.get_last()
+    assert ts2 is None
+
+
 def test_generate_contextual_response_generic():
     context.set_last("echo", "hello world")
     resp = chat_handler.generate_contextual_response("what was the output?")
