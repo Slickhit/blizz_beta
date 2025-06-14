@@ -3,7 +3,6 @@ import json
 from models.custom_memory import CustomMemory
 from modules.memory_processor import process_memory, retrieve_processed_memory
 from modules.event_logger import load_events
-from models.custom_memory import CustomMemory
 memory = CustomMemory()
 
 def get_recent_events(limit):
