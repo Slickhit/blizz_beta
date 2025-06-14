@@ -31,6 +31,7 @@ def generate_contextual_response(user_input: str) -> str | None:
 
     lower = user_input.lower()
 
+
     # Generic catch-all
     if any(w in lower for w in ("output", "result", last_cmd)):
         return last_out
@@ -38,12 +39,16 @@ def generate_contextual_response(user_input: str) -> str | None:
     # Command-specific helpers
     if last_cmd == "pwd" and any(k in lower for k in ("where", "directory")):
         return f"You're currently in `{last_out}`."
+
     if last_cmd == "ls" and any(k in lower for k in ("file", "contents")):
         return f"Here are the files:\n{last_out}"
+
     if last_cmd == "whoami" and ("who am i" in lower or "user" in lower):
         return f"The system reports user `{last_out}`."
+
     if last_cmd == "scan" and "port" in lower:
         return last_out
+
 
     return None
 

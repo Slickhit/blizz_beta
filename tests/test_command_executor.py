@@ -15,10 +15,12 @@ def test_execute_command_valid(tmp_path, monkeypatch):
     context.set_last(None, None)
     output = command_executor.execute_command("echo hello")
     last_cmd, last_out, ts = context.get_last()
+
     assert output.strip() == "hello"
     assert last_cmd == "echo"
     assert last_out == "hello"
     assert isinstance(ts, float)
+
 
 
 def test_execute_command_invalid(tmp_path, monkeypatch):

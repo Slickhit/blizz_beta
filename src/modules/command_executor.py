@@ -2,8 +2,10 @@ import os
 import subprocess
 import shlex
 import logging
+
 from modules import event_logger
 from modules import context
+
 
 logger = logging.getLogger(__name__)
 
