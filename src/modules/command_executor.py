@@ -51,18 +51,28 @@ def execute_command(command):
     if command_parts[0] == "scan":
         from modules import port_scanner  # Local import to avoid overhead
         if len(command_parts) < 2:
-            return "Usage: scan <target> [--ports 80,443]"
+            return "Usage: scan <target> [--ports 80,443] [--method METHOD]"
         target = command_parts[1]
         ports = None
+        method = "default"
         if "--ports" in command_parts:
             idx = command_parts.index("--ports")
             if idx + 1 >= len(command_parts):
-                return "Usage: scan <target> [--ports 80,443]"
+                return "Usage: scan <target> [--ports 80,443] [--method METHOD]"
             try:
                 ports = [int(p) for p in command_parts[idx + 1].split(',') if p.strip()]
             except ValueError:
                 return "Error: ports must be integers"
-        open_ports = port_scanner.scan_target(target, ports)
+        if "--method" in command_parts:
+            idx = command_parts.index("--method")
+            if idx + 1 >= len(command_parts):
+                return "Usage: scan <target> [--ports 80,443] [--method METHOD]"
+            method = command_parts[idx + 1]
+        elif "--nmap" in command_parts:
+            method = "nmap"
+        elif "--threader" in command_parts:
+            method = "threader"
+        open_ports = port_scanner.scan_target(target, ports, method=method)
         if open_ports:
             msg = f"Open ports on {target}: {', '.join(map(str, open_ports))}"
         else:

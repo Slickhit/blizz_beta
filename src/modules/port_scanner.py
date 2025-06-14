@@ -1,6 +1,13 @@
 import socket
+import subprocess
+import threading
+import queue
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Dict, Iterable, List, Tuple
+
+# Remember the last scanned target so the interactive menu can
+# run additional scans without changing its signature.
+_last_target: str | None = None
 
 # Common service names and simple recon tips for educational use
 SERVICE_TIPS: Dict[int, Tuple[str, str]] = {
@@ -27,11 +34,73 @@ def _scan_single_port(target: str, port: int, timeout: float) -> int | None:
             return port
 
 
-def scan_target(
-    target: str, ports: Iterable[int] | None = None, timeout: float = 0.5,
-    max_workers: int = 100
+def threader_scan(
+    target: str,
+    ports: Iterable[int] | None = None,
+    timeout: float = 0.5,
+    thread_count: int = 500,
 ) -> List[int]:
-    """Scan target host for open TCP ports using threads.
+    """Scan ports using a queue-based thread pool similar to threader3000."""
+    if ports is None:
+        ports = range(1, 1025)
+
+    open_ports: List[int] = []
+    q: "queue.Queue[int]" = queue.Queue()
+    for p in ports:
+        q.put(p)
+
+    def worker() -> None:
+        while True:
+            try:
+                port = q.get_nowait()
+            except queue.Empty:
+                break
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+                sock.settimeout(timeout)
+                if sock.connect_ex((target, port)) == 0:
+                    open_ports.append(port)
+            q.task_done()
+
+    threads = []
+    for _ in range(min(thread_count, q.qsize())):
+        t = threading.Thread(target=worker, daemon=True)
+        t.start()
+        threads.append(t)
+
+    q.join()
+    return sorted(open_ports)
+
+
+def nmap_scan(target: str, ports: Iterable[int] | None = None) -> List[int]:
+    """Run nmap to detect open ports. Returns list of ports or empty on error."""
+    port_arg = ",".join(map(str, ports)) if ports else "1-1024"
+    try:
+        result = subprocess.run(
+            ["nmap", "-p", port_arg, target], capture_output=True, text=True
+        )
+    except FileNotFoundError:
+        print("Error: nmap is not installed.")
+        return []
+
+    open_ports: List[int] = []
+    for line in result.stdout.splitlines():
+        line = line.strip()
+        if "/tcp" in line and "open" in line:
+            try:
+                open_ports.append(int(line.split("/")[0]))
+            except (ValueError, IndexError):
+                continue
+    return sorted(open_ports)
+
+
+def scan_target(
+    target: str,
+    ports: Iterable[int] | None = None,
+    timeout: float = 0.5,
+    max_workers: int = 100,
+    method: str = "default",
+) -> List[int]:
+    """Scan target host for open TCP ports.
 
     Args:
         target: Hostname or IP address to scan.
@@ -41,6 +110,15 @@ def scan_target(
     Returns:
         List of open ports.
     """
+    global _last_target
+    _last_target = target
+
+    if method == "nmap":
+        return nmap_scan(target, ports)
+
+    if method == "threader":
+        return threader_scan(target, ports, timeout, max_workers)
+
     if ports is None:
         ports = range(1, 1025)
 
@@ -80,13 +158,25 @@ def interactive_menu(open_ports: List[int]) -> None:
         print("\nWhat would you like to do?")
         print("[1] Print common service behavior")
         print("[2] Print recon tips for each service")
-        print("[3] Exit")
+        print("[3] Run nmap scan for more details")
+        print("[4] Exit")
         choice = input("> ").strip()
         if choice == "1":
             describe_services(open_ports)
         elif choice == "2":
             recon_suggestions(open_ports)
         elif choice == "3":
+            if _last_target:
+                detailed = nmap_scan(_last_target, open_ports)
+                if detailed:
+                    print(
+                        f"nmap detected open ports: {', '.join(map(str, detailed))}"
+                    )
+                else:
+                    print("nmap found no open ports.")
+            else:
+                print("No target available for nmap scan.")
+        elif choice == "4":
             break
         else:
-            print("Invalid choice. Please select 1, 2, or 3.")
+            print("Invalid choice. Please select 1, 2, 3, or 4.")

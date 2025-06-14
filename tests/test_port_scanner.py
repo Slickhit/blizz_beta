@@ -26,3 +26,13 @@ def test_scan_detects_open_port():
 def test_scan_closed_port():
     result = port_scanner.scan_target("localhost", [65534])
     assert result == []
+
+
+def test_threader_scan(monkeypatch):
+    server, port = _start_dummy_server()
+    monkeypatch.setattr(port_scanner, "interactive_menu", lambda ports: None)
+    try:
+        result = port_scanner.scan_target("localhost", [port], method="threader")
+        assert port in result
+    finally:
+        server.close()

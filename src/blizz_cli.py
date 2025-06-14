@@ -21,12 +21,18 @@ def main() -> None:
     scan_parser.add_argument(
         "--ports", help="Comma-separated list of ports", default=None
     )
+    scan_parser.add_argument(
+        "--method",
+        choices=["default", "threader", "nmap"],
+        default="default",
+        help="Scanning method to use",
+    )
 
     args = parser.parse_args()
 
     if args.command == "scan":
         ports = parse_ports(args.ports) if args.ports else None
-        open_ports = scan_target(args.target, ports)
+        open_ports = scan_target(args.target, ports, method=args.method)
         if open_ports:
             print(f"Open ports on {args.target}: {', '.join(map(str, open_ports))}")
         else:
