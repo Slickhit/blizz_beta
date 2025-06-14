@@ -7,12 +7,15 @@ import modules.port_scanner as port_scanner
 
 import modules.command_executor as command_executor
 import modules.event_logger as event_logger
+import modules.context as context
 
 
 def test_execute_command_valid(tmp_path, monkeypatch):
     monkeypatch.setattr(event_logger, "EVENT_LOG_FILE", str(tmp_path / "events.json"))
+    context.set_last(None, None)
     output = command_executor.execute_command("echo hello")
     assert output.strip() == "hello"
+    assert context.get_last() == ("echo", "hello")
 
 
 def test_execute_command_invalid(tmp_path, monkeypatch):
