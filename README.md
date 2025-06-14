@@ -22,6 +22,12 @@ Run `blizz` to launch the interface and start chatting:
 ./blizz
 ```
 
+To open the optional Tkinter GUI, use:
+
+```bash
+./blizz gui
+```
+
 You can also run the built-in port scanner from the command line or from inside
 the chat session. To scan from the command line use:
 
