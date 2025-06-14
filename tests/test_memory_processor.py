@@ -25,6 +25,7 @@ def run_process_memory(monkeypatch, tmp_path, raw_memory, model_response):
     fake_memory = FakeMemory(raw_memory)
     monkeypatch.setattr(memory_processor, "memory", fake_memory)
     monkeypatch.setattr(memory_processor, "processing_bot", make_fake_model(model_response))
+    monkeypatch.setattr(memory_processor, "load_events", lambda: [])
 
     processed_file = tmp_path / "processed.json"
     monkeypatch.setattr(memory_processor, "PROCESSED_MEMORY_FILE", str(processed_file))
