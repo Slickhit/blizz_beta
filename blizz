@@ -11,8 +11,8 @@ try:
     import blizz_cli
 except ModuleNotFoundError:
     print(
-        "Required module 'blizz_cli' not found. Install dependencies using 'pip install -r requirements.txt' "
-        "or 'pip install -e .'"
+        "Required module 'blizz_cli' not found. Install dependencies with "
+        "'pip install -r requirements.txt' or 'pip install -e .'."
     )
     sys.exit(1)
 
