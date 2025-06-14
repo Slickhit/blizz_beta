@@ -3,7 +3,6 @@ from typing import List
 
 from main import main as run_chat
 from modules.port_scanner import scan_target, interactive_menu
-from blizz_gui import main as run_gui
 
 
 def parse_ports(port_str: str) -> List[int]:
@@ -19,7 +18,7 @@ def main() -> None:
     subparsers.add_parser("chat", help="Start chat (default)")
 
     # Register the GUI launcher so `blizz gui` works from the CLI
-    subparsers.add_parser("gui", help="Launch the Tkinter GUI")
+    subparsers.add_parser("gui", help="Launch the GUI")
     scan_parser = subparsers.add_parser("scan", help="Run a simple port scanner")
     scan_parser.add_argument("target", help="Target host or IP")
     scan_parser.add_argument(
@@ -43,7 +42,8 @@ def main() -> None:
             print(f"No open ports found on {args.target}")
         interactive_menu(open_ports)
     elif args.command == "gui":
-        run_gui()
+        from blizz_gui import main as launch_gui
+        launch_gui()
     else:
         run_chat()
 
