@@ -15,10 +15,16 @@ Environment variables can be defined in a `.env` file and are loaded automatical
 
 ## Usage
 
-Run the main entry point to launch the interface and start chatting:
+Run `blizz` to launch the interface and start chatting:
 
 ```bash
-python src/main.py
+./blizz
+```
+
+You can also run the built-in port scanner with:
+
+```bash
+./blizz scan <target>
 ```
 
 The script displays a welcome banner, processes any stored memory, and then enters a chat loop where you can interact with the bot. Type `exit` to leave the chat.
