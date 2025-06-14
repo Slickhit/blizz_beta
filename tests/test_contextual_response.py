@@ -1,5 +1,7 @@
 import modules.context as context
 import modules.chat_handler as chat_handler
+import modules.command_executor as command_executor
+import modules.event_logger as event_logger
 
 
 def test_execute_command_valid(tmp_path, monkeypatch):
