@@ -24,27 +24,24 @@ greetings = [
 
 
 def generate_contextual_response(user_input: str) -> str | None:
-    """Return a reply that references the previous command's output."""
-    last_cmd, last_out, _timestamp = context.get_last()
+    """Return a reply that references the previous command’s output."""
+    last_cmd, last_out, _ts = context.get_last()
     if not last_cmd or not last_out:
         return None
 
     lower = user_input.lower()
 
-    # Generic checks: user references last output
-    if any(word in lower for word in ["output", "result", last_cmd]):
+    # Generic catch-all
+    if any(w in lower for w in ("output", "result", last_cmd)):
         return last_out
 
-    # Specialized hints for common commands
-    if last_cmd == "pwd" and any(k in lower for k in ["where", "directory"]):
+    # Command-specific helpers
+    if last_cmd == "pwd" and any(k in lower for k in ("where", "directory")):
         return f"You're currently in `{last_out}`."
-
-    if last_cmd == "ls" and any(k in lower for k in ["file", "contents"]):
+    if last_cmd == "ls" and any(k in lower for k in ("file", "contents")):
         return f"Here are the files:\n{last_out}"
-
     if last_cmd == "whoami" and ("who am i" in lower or "user" in lower):
         return f"The system reports user `{last_out}`."
-
     if last_cmd == "scan" and "port" in lower:
         return last_out
 
