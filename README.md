@@ -57,3 +57,12 @@ Several files control various aspects of the system:
 
 Adjust these files to customise how the bot behaves or how memory is handled.
 
+## Introspection Utilities
+
+New modules under `src/modules` provide self-monitoring features:
+
+- `state_reflector.py` summarizes active modules, recent tasks and configuration drift.
+- `behavior_alignment.py` checks recent behavior against the configured `system_goal`.
+- `feedback_loop.py` analyzes the event log for repeated errors.
+- `documentation_generator.py` can regenerate this README with basic details from the current configuration.
+
