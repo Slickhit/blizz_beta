@@ -14,7 +14,18 @@ def lazy_import_self_improvement():
 
 def execute_command(command):
     """Secure command execution using a whitelist approach."""
-    allowed_commands = ["ls", "pwd", "whoami", "df", "free", "uptime", "echo", "cat", "self_improve"]
+    allowed_commands = [
+        "ls",
+        "pwd",
+        "whoami",
+        "df",
+        "free",
+        "uptime",
+        "echo",
+        "cat",
+        "self_improve",
+        "scan",
+    ]
 
     try:
         command_parts = shlex.split(command)
@@ -36,6 +47,28 @@ def execute_command(command):
             return "Usage: self_improve <file_path>"
         self_improve = lazy_import_self_improvement()  # ✅ Import only when needed
         return self_improve.self_improve_code(command_parts[1])
+
+    if command_parts[0] == "scan":
+        from modules import port_scanner  # Local import to avoid overhead
+        if len(command_parts) < 2:
+            return "Usage: scan <target> [--ports 80,443]"
+        target = command_parts[1]
+        ports = None
+        if "--ports" in command_parts:
+            idx = command_parts.index("--ports")
+            if idx + 1 >= len(command_parts):
+                return "Usage: scan <target> [--ports 80,443]"
+            try:
+                ports = [int(p) for p in command_parts[idx + 1].split(',') if p.strip()]
+            except ValueError:
+                return "Error: ports must be integers"
+        open_ports = port_scanner.scan_target(target, ports)
+        if open_ports:
+            msg = f"Open ports on {target}: {', '.join(map(str, open_ports))}"
+        else:
+            msg = f"No open ports found on {target}"
+        port_scanner.interactive_menu(open_ports)
+        return msg
 
     for arg in command_parts[1:]:
         if any(symbol in arg for symbol in [';', '&', '|', '$', '>', '<']):

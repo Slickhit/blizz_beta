@@ -21,10 +21,18 @@ Run `blizz` to launch the interface and start chatting:
 ./blizz
 ```
 
-You can also run the built-in port scanner with:
+You can also run the built-in port scanner from the command line or from inside
+the chat session. To scan from the command line use:
 
 ```bash
 ./blizz scan <target>
+```
+
+Within the chat you can trigger the same scanner by prefixing the command with
+an exclamation mark:
+
+```text
+!scan <target> [--ports 80,443]
 ```
 
 After scanning, an interactive menu lets you display common service names or
