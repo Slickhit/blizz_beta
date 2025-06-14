@@ -67,6 +67,7 @@ class BlizzGUI:
 
         self.input_entry.delete(0, tk.END)
         self._append_text(self.chat_log, f"You: {user_text}\n")
+        self.chat_log.yview(tk.END)
 
         if user_text.lower() == "exit":
             self.root.quit()
@@ -79,6 +80,7 @@ class BlizzGUI:
             response = ctx_resp if ctx_resp is not None else handle_user_input(user_text)
 
         self._append_text(self.chat_log, f"Bot: {response}\n")
+        self.chat_log.yview(tk.END)
         self.update_boxes(response)
 
 
