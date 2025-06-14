@@ -7,7 +7,14 @@ SRC_DIR = os.path.join(SCRIPT_DIR, "src")
 if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
-import blizz_cli
+try:
+    import blizz_cli
+except ModuleNotFoundError:
+    print(
+        "Required module 'blizz_cli' not found. Install dependencies using 'pip install -r requirements.txt' "
+        "or 'pip install -e .'"
+    )
+    sys.exit(1)
 
 if __name__ == "__main__":
     blizz_cli.main()
