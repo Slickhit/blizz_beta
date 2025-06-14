@@ -26,12 +26,12 @@ greetings = [
 def generate_contextual_response(user_input: str) -> str | None:
     """Return a reply that references the previous command's output."""
     last_cmd, last_out, _timestamp = context.get_last()
-    if not last_cmd or last_out is None:
+    if not last_cmd or not last_out:
         return None
 
     lower = user_input.lower()
 
-    # Generic checks: user explicitly references the last command or its output
+    # Generic checks: user references last output
     if any(word in lower for word in ["output", "result", last_cmd]):
         return last_out
 
