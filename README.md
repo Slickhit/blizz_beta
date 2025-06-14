@@ -27,6 +27,10 @@ You can also run the built-in port scanner with:
 ./blizz scan <target>
 ```
 
+After scanning, an interactive menu lets you display common service names or
+basic recon tips for the detected ports. Use this only on systems you have
+explicit permission to test.
+
 The script displays a welcome banner, processes any stored memory, and then enters a chat loop where you can interact with the bot. Type `exit` to leave the chat.
 
 ## Configuration Files

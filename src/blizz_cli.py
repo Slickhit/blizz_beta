@@ -2,7 +2,7 @@ import argparse
 from typing import List
 
 from main import main as run_chat
-from modules.port_scanner import scan_target
+from modules.port_scanner import scan_target, interactive_menu
 
 
 def parse_ports(port_str: str) -> List[int]:
@@ -31,6 +31,7 @@ def main() -> None:
             print(f"Open ports on {args.target}: {', '.join(map(str, open_ports))}")
         else:
             print(f"No open ports found on {args.target}")
+        interactive_menu(open_ports)
     else:
         run_chat()
 
