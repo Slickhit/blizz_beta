@@ -2,6 +2,7 @@ import os
 import subprocess
 import shlex
 import logging
+from config.config_loader import load_neocortex_config
 
 from modules import event_logger
 from modules import context
@@ -18,18 +19,23 @@ def lazy_import_self_improvement():
 
 def execute_command(command):
     """Secure command execution using a whitelist approach."""
-    allowed_commands = [
-        "ls",
-        "pwd",
-        "whoami",
-        "df",
-        "free",
-        "uptime",
-        "echo",
-        "cat",
-        "self_improve",
-        "scan",
-    ]
+    config = load_neocortex_config()
+    allowed_commands = config.get(
+        "allowed_commands",
+        [
+            "ls",
+            "pwd",
+            "whoami",
+            "df",
+            "free",
+            "uptime",
+            "echo",
+            "cat",
+            "self_improve",
+            "scan",
+        ],
+    )
+    restricted_commands = set(config.get("restricted_commands", []))
 
     event_logger.log_event("command_received", {"command": command})
 
@@ -48,7 +54,7 @@ def execute_command(command):
     logger.debug("Command received: %s", command_parts[0])
     logger.debug("Allowed commands: %s", allowed_commands)
 
-    if command_parts[0] not in allowed_commands:
+    if command_parts[0] in restricted_commands or command_parts[0] not in allowed_commands:
         event_logger.log_event("command_blocked", {"command": command_parts[0]})
         context.set_last(None, None)
         return f"Error: Command '{command_parts[0]}' not allowed."
