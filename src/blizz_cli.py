@@ -17,6 +17,8 @@ def main() -> None:
     subparsers = parser.add_subparsers(dest="command")
 
     subparsers.add_parser("chat", help="Start chat (default)")
+
+    # Register the GUI launcher so `blizz gui` works from the CLI
     subparsers.add_parser("gui", help="Launch the Tkinter GUI")
     scan_parser = subparsers.add_parser("scan", help="Run a simple port scanner")
     scan_parser.add_argument("target", help="Target host or IP")
