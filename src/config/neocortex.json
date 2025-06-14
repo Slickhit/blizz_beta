@@ -1,6 +1,7 @@
 {
     "memory_limit": 10,
     "enable_commands": true,
+    "system_goal": "Provide a helpful terminal assistant for security tasks",
     "greeting_message": "dynamic", 
     "restricted_commands": ["rm", "shutdown", "reboot"],
     "model": "gpt-4o",

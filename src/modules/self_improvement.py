@@ -1,6 +1,7 @@
 import os
 import subprocess
 import logging
+import ast
 from langchain_openai import ChatOpenAI
 from modules.file_utils import read_own_code  # ✅ FIXED! Now correctly importing from file_utils.py
 
@@ -92,3 +93,23 @@ def modify_own_code(filepath, new_code):
     except Exception as e:
         logger.error("Error writing file %s: %s", filepath, e)
         return f"Error writing file: {e}"
+
+
+def analyze_code_for_improvements(file_path):
+    """Return simple metrics highlighting potential refactors."""
+    code = read_own_code(file_path)
+    if "Error:" in code:
+        return code
+    tree = ast.parse(code)
+    long_functions = []
+    for node in tree.body:
+        if isinstance(node, ast.FunctionDef):
+            lines = (node.end_lineno or 0) - (node.lineno or 0)
+            if lines > 20:
+                long_functions.append((node.name, lines))
+    suggestions = []
+    for name, length in long_functions:
+        suggestions.append(f"Function '{name}' is {length} lines long; consider refactoring.")
+    if not suggestions:
+        suggestions.append("No obvious improvements detected.")
+    return "\n".join(suggestions)
