@@ -54,21 +54,26 @@ def generate_contextual_response(user_input: str) -> str | None:
 
 def handle_user_input(user_input):
     """Process a single exchange and return the bot's response."""
+    config = load_neocortex_config()
     structured_memory = retrieve_processed_memory()
     conversation_history = structured_memory.get("conversation_history", [])
     event_logger.log_event("user_input", {"text": user_input})
 
     # Get guidance from Neuron
-    guidance = neuron_advice(user_input, conversation_history, load_neocortex_config())
+    guidance = neuron_advice(user_input, conversation_history, config)
     combined_prompt = f"Neuron's guidance: {guidance}\n\nUser: {user_input}\nBot:"
 
     # Use the pre-initialized AI model
     response = main_bot.invoke(combined_prompt)
 
+    response_text = response.content
+    if config.get("use_emoji"):
+        response_text += " 😊"
+
     # Save conversation context
-    memory.save_context(user_input, response.content)
-    event_logger.log_event("bot_response", {"text": response.content})
-    return response.content
+    memory.save_context(user_input, response_text)
+    event_logger.log_event("bot_response", {"text": response_text})
+    return response_text
 
 def chat_loop():
     """Main chat loop that handles each conversation exchange."""
