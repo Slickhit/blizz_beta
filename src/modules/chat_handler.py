@@ -6,6 +6,7 @@ from modules.memory_handler import retrieve_processed_memory, neuron_advice, pro
 from models.custom_memory import CustomMemory
 from modules.command_executor import execute_command
 from modules import event_logger
+from modules import context
 
 memory = CustomMemory()
 
@@ -20,6 +21,34 @@ greetings = [
     "Ayy, welcome back! Need something hacked?",
     "BlizzNetic online—what’s up?"
 ]
+
+
+def generate_contextual_response(user_input: str) -> str | None:
+    """Return a reply that references the previous command's output."""
+    last_cmd, last_out = context.get_last()
+    if not last_cmd or last_out is None:
+        return None
+
+    lower = user_input.lower()
+
+    # Generic checks: user explicitly references the last command or its output
+    if any(word in lower for word in ["output", "result", last_cmd]):
+        return last_out
+
+    # Specialized hints for common commands
+    if last_cmd == "pwd" and any(k in lower for k in ["where", "directory"]):
+        return f"You're currently in `{last_out}`."
+
+    if last_cmd == "ls" and any(k in lower for k in ["file", "contents"]):
+        return f"Here are the files:\n{last_out}"
+
+    if last_cmd == "whoami" and ("who am i" in lower or "user" in lower):
+        return f"The system reports user `{last_out}`."
+
+    if last_cmd == "scan" and "port" in lower:
+        return last_out
+
+    return None
 
 def handle_user_input(user_input):
     """Process a single exchange and return the bot's response."""
@@ -62,7 +91,11 @@ def chat_loop():
             command = user_input[1:].strip()  # Remove "!" and extra spaces
             bot_response = execute_command(command)
         else:
-            bot_response = handle_user_input(user_input)
+            ctx_resp = generate_contextual_response(user_input)
+            if ctx_resp is not None:
+                bot_response = ctx_resp
+            else:
+                bot_response = handle_user_input(user_input)
 
         exchange_count += 1
 
