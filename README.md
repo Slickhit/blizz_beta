@@ -22,14 +22,27 @@ Run `blizz` to launch the interface and start chatting:
 ./blizz
 ```
 
-To open the optional graphical interface, run:
+To open the graphical interface, run:
+
+```bash
+./blizz --gui
+```
+
+This launches the window immediately without requiring a subcommand. If you
+prefer, the subcommand style also works:
 
 ```bash
 ./blizz gui
 ```
 
-This GUI is built with Tkinter and may require the `python3-tk` package
-(or your platform's Tkinter package) to be installed.
+The command automatically checks for Tkinter and attempts to install it if
+needed. If installation fails, install your platform's Tkinter package
+(often `python3-tk` on Debian/Ubuntu) and re-run the command.
+
+When it runs, a window appears showing the chat log, an input box and extra
+panes for suggestions and guidance.
+
+For a full list of commands and options run `./blizz --help`.
 
 You can also run the built-in port scanner from the command line or from inside
 the chat session. To scan from the command line use:

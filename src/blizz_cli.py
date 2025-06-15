@@ -1,4 +1,7 @@
 import argparse
+import importlib
+import subprocess
+import sys
 from typing import List
 
 from main import main as run_chat
@@ -9,9 +12,39 @@ def parse_ports(port_str: str) -> List[int]:
     return [int(p) for p in port_str.split(",") if p.strip()]
 
 
+def ensure_gui_dependencies() -> None:
+    """Ensure Tkinter is available for the GUI."""
+    try:
+        importlib.import_module("tkinter")
+    except ModuleNotFoundError:
+        print("Tkinter not found. Attempting to install...", file=sys.stderr)
+        try:
+            subprocess.check_call([sys.executable, "-m", "pip", "install", "tk"])
+        except Exception:
+            print(
+                "Automatic installation failed. Install 'python3-tk' or your platform's Tkinter package.",
+                file=sys.stderr,
+            )
+            raise
+
+
 def main() -> None:
+    # Handle the global --gui flag before parsing subcommands so it can be used
+    # on its own without requiring "chat" or another command.
+    if "--gui" in sys.argv:
+        ensure_gui_dependencies()
+        from blizz_gui import main as launch_gui
+
+        launch_gui()
+        return
+
     parser = argparse.ArgumentParser(
         prog="blizz", description="Blizz command line interface"
+    )
+    parser.add_argument(
+        "--gui",
+        action="store_true",
+        help="Launch the graphical interface",
     )
     subparsers = parser.add_subparsers(dest="command")
 
@@ -42,6 +75,7 @@ def main() -> None:
             print(f"No open ports found on {args.target}")
         interactive_menu(open_ports)
     elif args.command == "gui":
+        ensure_gui_dependencies()
         from blizz_gui import main as launch_gui
         launch_gui()
     else:
