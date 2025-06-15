@@ -16,10 +16,13 @@ def ensure_gui_dependencies() -> None:
     """Ensure Tkinter is available for the GUI."""
     try:
         importlib.import_module("tkinter")
+        return
     except ModuleNotFoundError:
         print("Tkinter not found. Attempting to install...", file=sys.stderr)
         try:
             subprocess.check_call([sys.executable, "-m", "pip", "install", "tk"])
+            importlib.import_module("tkinter")
+            return
         except Exception:
             print(
                 "Automatic installation failed. Install 'python3-tk' or your platform's Tkinter package.",

@@ -35,6 +35,8 @@ prefer, the subcommand style also works:
 ./blizz gui
 ```
 
+The older syntax above is still supported if you prefer a subcommand approach.
+
 The command automatically checks for Tkinter and attempts to install it if
 needed. If installation fails, install your platform's Tkinter package
 (often `python3-tk` on Debian/Ubuntu) and re-run the command.
