@@ -16,10 +16,24 @@ def ensure_gui_dependencies() -> None:
     """Ensure Tkinter is available for the GUI."""
     try:
         importlib.import_module("tkinter")
+def ensure_gui_dependencies() -> None:
+    """Ensure Tkinter is available for the GUI."""
+    try:
+        importlib.import_module("tkinter")
+        return
     except ModuleNotFoundError:
         print("Tkinter not found. Attempting to install...", file=sys.stderr)
         try:
             subprocess.check_call([sys.executable, "-m", "pip", "install", "tk"])
+            importlib.import_module("tkinter")
+            return
+        except Exception:
+            print(
+                "Automatic installation failed. Install 'python3-tk' or your platform's Tkinter package.",
+                file=sys.stderr,
+            )
+            raise
+
         except Exception:
             print(
                 "Automatic installation failed. Install 'python3-tk' or your platform's Tkinter package.",
@@ -29,6 +43,15 @@ def ensure_gui_dependencies() -> None:
 
 
 def main() -> None:
+    # Handle the global --gui flag before parsing subcommands so it can be used
+    # on its own without requiring "chat" or another command.
+    if "--gui" in sys.argv:
+        ensure_gui_dependencies()
+        from blizz_gui import main as launch_gui
+
+        launch_gui()
+        return
+
     parser = argparse.ArgumentParser(
         prog="blizz", description="Blizz command line interface"
     )
