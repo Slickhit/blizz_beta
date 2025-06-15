@@ -23,23 +23,20 @@ Run `blizz` to launch the interface and start chatting:
 ```
 
 To open the graphical interface, run:
+To open the graphical interface, run:
 
 ```bash
 ./blizz --gui
 ```
 
-This launches the window immediately without requiring a subcommand. If you
-prefer, the subcommand style also works:
+This launches the window immediately without requiring a subcommand. If you prefer, the subcommand style also works:
 
 ```bash
 ./blizz gui
 ```
 
-The older syntax above is still supported if you prefer a subcommand approach.
+This command automatically checks for Tkinter and attempts to install it if needed. If installation fails, install your platform’s Tkinter package (often `python3-tk` on Debian/Ubuntu) and re-run the command. The older syntax `./blizz gui` still works as well.
 
-The command automatically checks for Tkinter and attempts to install it if
-needed. If installation fails, install your platform's Tkinter package
-(often `python3-tk` on Debian/Ubuntu) and re-run the command.
 
 When it runs, a window appears showing the chat log, an input box and extra
 panes for suggestions and guidance.
