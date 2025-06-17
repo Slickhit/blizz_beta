@@ -1,6 +1,11 @@
 # Blizz Beta
 
-Blizz Beta is a simple terminal-based chat assistant that stores conversation history and can process that memory between sessions. The project is organized inside the `src/` directory and relies on a few configuration files to control how the bot behaves.
+Blizz Beta is a security focused terminal assistant.  It stores conversation
+history, processes that memory for context and can execute limited system
+commands.  The project lives in the `src/` directory and is driven by a few
+JSON configuration files.  A mission statement located in
+`src/models/bot_mission.json` is injected into every prompt so the assistant is
+aware of its hacking mindset.
 
 ## Setup
 
@@ -22,7 +27,6 @@ Run `blizz` to launch the interface and start chatting:
 ./blizz
 ```
 
-To open the graphical interface, run:
 To open the graphical interface, run:
 
 ```bash
@@ -65,7 +69,25 @@ The scanner now supports additional methods. Use `--method threader` to
 emulate the behaviour of the threader3000 project, `--method nmap` to invoke
 the `nmap` utility, or `--method async` for an asyncio-based implementation.
 
-The script displays a welcome banner, processes any stored memory, and then enters a chat loop where you can interact with the bot. Type `exit` to leave the chat.
+
+The script displays a welcome banner, processes any stored memory, and then
+enters a chat loop where you can interact with the bot. Type `exit` to leave the
+chat.
+
+## Command Manual
+
+Blizz Beta recognises a few commands both from the main chat loop and from the
+minimal `simple_main.py` interface:
+
+- `!<command>` or `run <command>` – execute a whitelisted shell command.
+- `!scan` or `blizz scan` – run the integrated port scanner. Optional flags:
+  `--ports`, `--method threader|nmap|async`.
+- `sniper <ip>` – launch the external Sn1per tool and save the JSON output.
+- `recall <ip>` – print the last Sn1per scan for the given IP.
+
+The exclamation mark form works inside the normal chat loop, while the `run`,
+`sniper`, and `recall` syntax is available in the barebones CLI found in
+`simple_main.py`.
 
 ## Configuration Files
 
@@ -75,6 +97,7 @@ Several files control various aspects of the system:
 - `src/config/interface_config.json` – settings for the terminal interface such as the banner text and welcome message.
 - `src/models/memory.json` – raw conversation history saved across sessions.
 - `src/models/processed_memory.json` – structured data produced by the memory processor.
+- `src/models/bot_mission.json` – mission statement injected into prompts.
 - `config.cfg` – example configuration for a spaCy training pipeline (not required to run the chat bot).
 
 Adjust these files to customise how the bot behaves or how memory is handled.
