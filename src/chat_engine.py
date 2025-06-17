@@ -1,5 +1,13 @@
 import openai
 import os
+import json
+
+MISSION_FILE = os.path.join(os.path.dirname(__file__), "models", "bot_mission.json")
+try:
+    with open(MISSION_FILE, "r", encoding="utf-8") as f:
+        BOT_MISSION = json.load(f).get("motivation", "")
+except Exception:
+    BOT_MISSION = ""
 
 
 def chat(prompt: str) -> str:
@@ -12,6 +20,10 @@ def chat(prompt: str) -> str:
             system_prompt = f.read()
     except FileNotFoundError:
         system_prompt = "You are a helpful assistant."
+
+    # Inject mission statement into the system prompt
+    if BOT_MISSION:
+        system_prompt = f"{BOT_MISSION}\n\n{system_prompt}"
 
     messages = [
         {"role": "system", "content": system_prompt},

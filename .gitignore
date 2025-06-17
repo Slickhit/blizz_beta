@@ -6,6 +6,7 @@ venv/
 
 # Ignore generated data files
 src/models/*.json
+!src/models/bot_mission.json
 .history/
 logs/
 __pycache__/
