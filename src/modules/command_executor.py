@@ -7,6 +7,19 @@ from config.config_loader import load_neocortex_config
 from modules import event_logger
 from modules import context
 from modules import dashboard
+
+
+def _push_feedback() -> None:
+    """Generate tactical suggestions and push them to the guidance pane."""
+    try:
+        from modules.feedback_loop import generate_suggestions
+        from modules.guidance_api import guidance_api
+
+        for suggestion in generate_suggestions():
+            if suggestion:
+                guidance_api.push(suggestion)
+    except Exception:
+        pass
 from models.custom_memory import CustomMemory
 
 
@@ -47,11 +60,13 @@ def execute_command(command):
     except ValueError as e:
         event_logger.log_event("command_error", {"command": command, "error": str(e)})
         context.set_last(None, None)
+        _push_feedback()
         return f"Error parsing command: {e}"
 
     if not command_parts:
         event_logger.log_event("command_error", {"command": command, "error": "no command"})
         context.set_last(None, None)
+        _push_feedback()
         return "Error: No command provided."
 
     logger.debug("Command received: %s", command_parts[0])
@@ -60,6 +75,7 @@ def execute_command(command):
     if command_parts[0] in restricted_commands or command_parts[0] not in allowed_commands:
         event_logger.log_event("command_blocked", {"command": command_parts[0]})
         context.set_last(None, None)
+        _push_feedback()
         return f"Error: Command '{command_parts[0]}' not allowed."
 
     # ✅ If `self_improve` is called, run the function
@@ -67,11 +83,13 @@ def execute_command(command):
         if len(command_parts) < 2:
             event_logger.log_event("command_error", {"command": command, "error": "missing file"})
             context.set_last(None, None)
+            _push_feedback()
             return "Usage: self_improve <file_path>"
         self_improve = lazy_import_self_improvement()  # ✅ Import only when needed
         result = self_improve.self_improve_code(command_parts[1])
         event_logger.log_event("self_improve", {"file": command_parts[1], "result": result})
         context.set_last("self_improve", result)
+        _push_feedback()
         return result
 
     if command_parts[0] == "scan":
@@ -79,6 +97,7 @@ def execute_command(command):
         if len(command_parts) < 2:
             event_logger.log_event("command_error", {"command": command, "error": "missing target"})
             context.set_last(None, None)
+            _push_feedback()
             return "Usage: scan <target> [--ports 80,443] [--method METHOD]"
         target = command_parts[1]
         ports = None
@@ -87,16 +106,19 @@ def execute_command(command):
             idx = command_parts.index("--ports")
             if idx + 1 >= len(command_parts):
                 context.set_last(None, None)
+                _push_feedback()
                 return "Usage: scan <target> [--ports 80,443] [--method METHOD]"
             try:
                 ports = [int(p) for p in command_parts[idx + 1].split(',') if p.strip()]
             except ValueError:
                 context.set_last(None, None)
+                _push_feedback()
                 return "Error: ports must be integers"
         if "--method" in command_parts:
             idx = command_parts.index("--method")
             if idx + 1 >= len(command_parts):
                 context.set_last(None, None)
+                _push_feedback()
                 return "Usage: scan <target> [--ports 80,443] [--method METHOD]"
             method = command_parts[idx + 1]
         elif "--nmap" in command_parts:
@@ -112,12 +134,14 @@ def execute_command(command):
         event_logger.log_event("scan", {"target": target, "ports": open_ports})
         context.set_last("scan", msg)
         dashboard.refresh_dashboard()
+        _push_feedback()
         return msg
 
     for arg in command_parts[1:]:
         if any(symbol in arg for symbol in [';', '&', '|', '$', '>', '<']):
             event_logger.log_event("command_error", {"command": command, "error": "invalid chars"})
             context.set_last(None, None)
+            _push_feedback()
             return "Error: Invalid characters in arguments."
 
     try:
@@ -131,12 +155,14 @@ def execute_command(command):
         except Exception as e:
             logger.error("Memory save failed: %s", e)
         dashboard.refresh_dashboard()
+        _push_feedback()
         return output
     except Exception as e:
         logger.error("Command execution error: %s", e)
         event_logger.log_event("command_error", {"command": command_parts[0], "error": str(e)})
         context.set_last(command_parts[0], f"Command execution error: {e}")
         dashboard.refresh_dashboard()
+        _push_feedback()
         return f"Command execution error: {e}"
 
 

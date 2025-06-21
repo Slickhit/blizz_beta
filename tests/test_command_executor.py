@@ -63,3 +63,12 @@ def test_execute_command_scan(monkeypatch, tmp_path):
         assert str(port) in output
     finally:
         server.close()
+
+
+def test_execute_command_invokes_feedback(monkeypatch, tmp_path):
+    monkeypatch.setattr(event_logger, "EVENT_LOG_FILE", str(tmp_path / "events.json"))
+    flag = {"called": False}
+    monkeypatch.setattr(command_executor, "_push_feedback", lambda: flag.__setitem__("called", True))
+    monkeypatch.setattr(command_executor, "memory", types.SimpleNamespace(save_context=lambda *a, **k: None))
+    command_executor.execute_command("echo hi")
+    assert flag["called"]
