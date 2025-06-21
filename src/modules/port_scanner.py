@@ -151,7 +151,22 @@ def scan_target(
         return threader_scan(target, ports, timeout, max_workers)
 
     if method == "async":
-        return asyncio.run(asyncio_scan(target, ports, timeout))
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            loop = None
+
+        if loop is None:
+            return asyncio.run(asyncio_scan(target, ports, timeout))
+
+        if loop.is_running():
+            new_loop = asyncio.new_event_loop()
+            try:
+                return new_loop.run_until_complete(asyncio_scan(target, ports, timeout))
+            finally:
+                new_loop.close()
+        else:
+            return loop.run_until_complete(asyncio_scan(target, ports, timeout))
 
     if ports is None:
         ports = range(1, 1025)

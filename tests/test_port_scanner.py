@@ -1,5 +1,6 @@
 import socket
 import threading
+import asyncio
 
 import modules.port_scanner as port_scanner
 
@@ -46,3 +47,17 @@ def test_async_scan(monkeypatch):
         assert port in result
     finally:
         server.close()
+
+
+def test_async_scan_with_existing_loop(monkeypatch):
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    server, port = _start_dummy_server()
+    monkeypatch.setattr(port_scanner, "interactive_menu", lambda ports: None)
+    try:
+        result = port_scanner.scan_target("localhost", [port], method="async")
+        assert port in result
+    finally:
+        server.close()
+        loop.close()
+        asyncio.set_event_loop(None)
