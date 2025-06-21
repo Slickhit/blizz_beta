@@ -173,6 +173,15 @@ class BlizzGUI:
         scan_button = tk.Button(header, text="Scan", command=self.scan_prompt, bg="#1e1e1e", fg="#00ffcc")
         scan_button.pack(side="left", padx=(5, 0))
 
+        sniper_button = tk.Button(header, text="Sn1per", command=self.sniper_prompt, bg="#1e1e1e", fg="#00ffcc")
+        sniper_button.pack(side="left", padx=(5, 0))
+
+        recall_button = tk.Button(header, text="Recall", command=self.recall_prompt, bg="#1e1e1e", fg="#00ffcc")
+        recall_button.pack(side="left", padx=(5, 0))
+
+        run_button = tk.Button(header, text="Run", command=self.run_prompt, bg="#1e1e1e", fg="#00ffcc")
+        run_button.pack(side="left", padx=(5, 0))
+
         self.common_opts = {
             "font": ("Courier New", 10),
             "fg": "#00ffcc",
@@ -227,13 +236,37 @@ class BlizzGUI:
         target = simpledialog.askstring("Scan", "Target?")
         if not target:
             return
-        ports = scan_target(target)
-        msg = (
-            f"Scan results for {target}: {', '.join(map(str, ports))}"
-            if ports
-            else f"No open ports on {target}"
-        )
-        guidance_api.push(msg)
+        cmd = f"!scan {target}"
+        if self.current_session:
+            self.current_session.input_entry.insert(0, cmd)
+            self.current_session.handle_input()
+
+    def sniper_prompt(self) -> None:
+        ip = simpledialog.askstring("Sn1per", "IP address?")
+        if not ip:
+            return
+        cmd = f"sniper {ip}"
+        if self.current_session:
+            self.current_session.input_entry.insert(0, cmd)
+            self.current_session.handle_input()
+
+    def recall_prompt(self) -> None:
+        ip = simpledialog.askstring("Recall", "IP address?")
+        if not ip:
+            return
+        cmd = f"recall {ip}"
+        if self.current_session:
+            self.current_session.input_entry.insert(0, cmd)
+            self.current_session.handle_input()
+
+    def run_prompt(self) -> None:
+        cmd = simpledialog.askstring("Run", "Command?")
+        if not cmd:
+            return
+        full_cmd = f"run {cmd}"
+        if self.current_session:
+            self.current_session.input_entry.insert(0, full_cmd)
+            self.current_session.handle_input()
 
     def _on_tab_change(self, event=None) -> None:
         idx = self.notebook.index("current")
