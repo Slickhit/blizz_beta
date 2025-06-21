@@ -142,9 +142,9 @@ class ChatSession:
             command = user_text[1:].strip()
             response = execute_command(command)
             try:
-                from modules.cli_guidance import synthesize_guidance
+                from guidance import manager as guidance_manager
 
-                hint = synthesize_guidance(command, response)
+                hint = guidance_manager.generate(command, response)
                 if hint:
                     guidance_api.push(hint)
             except Exception:
