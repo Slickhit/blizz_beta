@@ -3,6 +3,7 @@ import json
 from models.custom_memory import CustomMemory
 from modules.memory_processor import process_memory, retrieve_processed_memory
 from modules.event_logger import load_events
+from modules import context
 memory = CustomMemory()
 
 def get_recent_events(limit):
@@ -20,11 +21,14 @@ def neuron_advice(user_input, conversation_history, config):
     recent_limit = config.get("memory_retrieval", {}).get("recent_limit", 5)
     recent_history = get_recent_conversation(conversation_history, recent_limit)
     recent_events = get_recent_events(recent_limit)
+    recent_commands = context.get_history(recent_limit)
+    command_summary = "\n".join([f"{c}: {o}" for c, o, _t in recent_commands])
     
     prompt = (
         f"You are {meta_bot_config.get('name', 'Neuron')}, an internal advisor.\n"
         f"Your role: {meta_bot_config.get('role', 'Internal advisor for the bot.')}\n"
         f"Your purpose: {meta_bot_config.get('purpose', 'Guide the main bot with memory filtering and pacing.')}\n\n"
+        f"### Recent Commands:\n{command_summary}\n\n"
         f"### Conversation History (last {recent_limit} messages):\n"
         f"{recent_history}\n\n"
         f"### Recent Events:\n{recent_events}\n\n"
