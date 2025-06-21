@@ -104,6 +104,7 @@ Several files control various aspects of the system:
 
 - `src/config/neocortex.json` – main configuration for the bot (model selection, memory limits, greeting behaviour, etc.). Set `"use_emoji": true` to append a friendly emoji to every reply.
 - `src/config/interface_config.json` – settings for the terminal interface such as the banner text and welcome message.
+- `src/config/features.json` – list of built-in capabilities used by `self_awareness.py`.
 - `src/models/memory.json` – raw conversation history saved across sessions.
 - `src/models/processed_memory.json` – structured data produced by the memory processor.
 - `src/models/bot_mission.json` – mission statement injected into prompts.
@@ -134,4 +135,5 @@ New modules under `src/modules` provide self-monitoring features:
 - `behavior_alignment.py` checks recent behavior against the configured `system_goal`.
 - `feedback_loop.py` analyzes the event log for repeated errors.
 - `documentation_generator.py` can regenerate this README with basic details from the current configuration.
+- `self_awareness.py` lists available features from `src/config/features.json`.
 
