@@ -6,6 +6,7 @@ from config.config_loader import load_neocortex_config
 
 from modules import event_logger
 from modules import context
+from modules import dashboard
 from models.custom_memory import CustomMemory
 
 
@@ -110,6 +111,7 @@ def execute_command(command):
         port_scanner.interactive_menu(open_ports)
         event_logger.log_event("scan", {"target": target, "ports": open_ports})
         context.set_last("scan", msg)
+        dashboard.refresh_dashboard()
         return msg
 
     for arg in command_parts[1:]:
@@ -128,11 +130,13 @@ def execute_command(command):
             memory.save_context(command, output)
         except Exception as e:
             logger.error("Memory save failed: %s", e)
+        dashboard.refresh_dashboard()
         return output
     except Exception as e:
         logger.error("Command execution error: %s", e)
         event_logger.log_event("command_error", {"command": command_parts[0], "error": str(e)})
         context.set_last(command_parts[0], f"Command execution error: {e}")
+        dashboard.refresh_dashboard()
         return f"Command execution error: {e}"
 
 

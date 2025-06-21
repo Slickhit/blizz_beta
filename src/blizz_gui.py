@@ -11,6 +11,7 @@ from modules.command_executor import execute_command
 from modules.port_scanner import scan_target
 from modules import chat_db, summarizer
 from modules.guidance_api import guidance_api
+from modules import dashboard
 
 
 class ChatSession:
@@ -201,6 +202,11 @@ class BlizzGUI:
         self.notebook.pack(expand=True, fill="both")
         self.notebook.bind("<<NotebookTabChanged>>", self._on_tab_change)
 
+        # Dashboard tab
+        self.dashboard = dashboard.GUIDashboard(self.notebook)
+        self.notebook.add(self.dashboard.frame, text="Dashboard")
+        dashboard.set_active_dashboard(self.dashboard)
+
         self.sessions: list[ChatSession] = []
         self.current_session: ChatSession | None = None
 
@@ -279,10 +285,17 @@ class BlizzGUI:
 
     def _on_tab_change(self, event=None) -> None:
         idx = self.notebook.index("current")
-        if 0 <= idx < len(self.sessions):
-            self.current_session = self.sessions[idx]
-            self.current_session.load_history()
-            guidance_api.set_widget(self.current_session.guidance_box)
+        if idx == self.notebook.index(self.dashboard.frame):
+            self.current_session = None
+            dashboard.set_active_dashboard(self.dashboard)
+        else:
+            session_idx = idx
+            if self.dashboard.frame in self.notebook.tabs():
+                session_idx -= 1
+            if 0 <= session_idx < len(self.sessions):
+                self.current_session = self.sessions[session_idx]
+                self.current_session.load_history()
+                guidance_api.set_widget(self.current_session.guidance_box)
 
 
 def main() -> None:
