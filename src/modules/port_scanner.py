@@ -6,6 +6,8 @@ import asyncio
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Dict, Iterable, List, Tuple
 
+from modules import dashboard
+
 # Remember the last scanned target so the interactive menu can
 # run additional scans without changing its signature.
 _last_target: str | None = None
@@ -69,6 +71,7 @@ def threader_scan(
         threads.append(t)
 
     q.join()
+    dashboard.refresh_dashboard()
     return sorted(open_ports)
 
 
@@ -94,6 +97,7 @@ async def asyncio_scan(
             pass
 
     await asyncio.gather(*(check(p) for p in ports))
+    dashboard.refresh_dashboard()
     return sorted(open_ports)
 
 
@@ -116,6 +120,7 @@ def nmap_scan(target: str, ports: Iterable[int] | None = None) -> List[int]:
                 open_ports.append(int(line.split("/")[0]))
             except (ValueError, IndexError):
                 continue
+    dashboard.refresh_dashboard()
     return sorted(open_ports)
 
 
@@ -158,6 +163,7 @@ def scan_target(
             result = future.result()
             if result is not None:
                 open_ports.append(result)
+    dashboard.refresh_dashboard()
     return sorted(open_ports)
 
 
