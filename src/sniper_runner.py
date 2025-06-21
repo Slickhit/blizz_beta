@@ -3,6 +3,8 @@ import os
 import subprocess
 from datetime import datetime
 
+from modules.guidance_api import guidance_api
+
 SNIPER_OUTPUT_DIR = "scan_logs"
 
 
@@ -13,8 +15,10 @@ def run_sniper(ip: str):
     cmd = f"sniper -t {ip} -o {output_file} -f json"
     subprocess.run(cmd, shell=True)
     if os.path.exists(output_file):
+        guidance_api.push(f"Sn1per results saved to {output_file}")
         with open(output_file, "r") as f:
             return json.load(f)
+    guidance_api.push("Sn1per scan failed")
     return {"error": "Scan failed or output not generated."}
 
 

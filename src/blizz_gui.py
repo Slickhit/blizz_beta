@@ -138,7 +138,16 @@ class ChatSession:
             return
 
         if user_text.startswith("!"):
-            response = execute_command(user_text[1:].strip())
+            command = user_text[1:].strip()
+            response = execute_command(command)
+            try:
+                from modules.cli_guidance import synthesize_guidance
+
+                hint = synthesize_guidance(command, response)
+                if hint:
+                    guidance_api.push(hint)
+            except Exception:
+                pass
         else:
             ctx_resp = generate_contextual_response(user_text)
             response = ctx_resp if ctx_resp is not None else handle_user_input(user_text)
