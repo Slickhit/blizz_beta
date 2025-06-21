@@ -37,10 +37,14 @@ The following is the existing Python code that needs improvement:
     improved_code = model.invoke(prompt).content
 
     # ✅ Log AI output for debugging
-    with open("logs/ai_generated_code.py", "w", encoding="utf-8") as log_file:
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    log_dir = os.path.join(base_dir, "logs")
+    os.makedirs(log_dir, exist_ok=True)
+    log_path = os.path.join(log_dir, "ai_generated_code.py")
+    with open(log_path, "w", encoding="utf-8") as log_file:
         log_file.write(improved_code)
 
-    logger.debug("AI-generated code saved to logs/ai_generated_code.py")
+    logger.debug("AI-generated code saved to %s", log_path)
 
     # ✅ Fix bad characters before processing
     improved_code = improved_code.replace("’", "'")  # Replace curly quotes with normal ones
