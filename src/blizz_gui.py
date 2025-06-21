@@ -1,4 +1,5 @@
 import re
+from pathlib import Path
 import tkinter as tk
 from tkinter.scrolledtext import ScrolledText
 
@@ -12,24 +13,45 @@ class BlizzGUI:
     def __init__(self, root: tk.Tk) -> None:
         self.root = root
         root.title("Blizz Beta")
+        root.configure(bg="#1e1e1e")
 
-        self.chat_log = ScrolledText(root, width=80, height=20, state="disabled")
-        self.chat_log.pack(padx=5, pady=5)
+        logo_frame = tk.Frame(root, bg="#1e1e1e")
+        logo_frame.pack(pady=(10, 5))
+        logo_path = Path(__file__).resolve().parent.parent / "assets" / "blizz_netic_logo.png"
+        self.logo_img = tk.PhotoImage(file=str(logo_path))
+        logo_label = tk.Label(logo_frame, image=self.logo_img, bg="#1e1e1e")
+        logo_label.pack()
 
-        self.input_entry = tk.Entry(root, width=80)
-        self.input_entry.pack(padx=5, pady=(0, 5))
+        common_opts = {
+            "font": ("Courier New", 10),
+            "fg": "#00ffcc",
+            "bg": "#1e1e1e",
+        }
+
+        self.chat_log = ScrolledText(root, width=80, height=20, state="disabled", **common_opts)
+        self.chat_log.pack(padx=10, pady=5)
+
+        self.input_entry = tk.Entry(root, width=80, **common_opts)
+        self.input_entry.configure(insertbackground="#00ffcc")
+        self.input_entry.pack(padx=10, pady=(0, 5))
 
         # Allow pressing Enter anywhere in the window to send the message
         root.bind("<Return>", self.handle_input)
 
-        send_button = tk.Button(root, text="Send", command=self.handle_input)
-        send_button.pack(pady=(0, 5))
+        send_button = tk.Button(
+            root,
+            text="Send",
+            command=self.handle_input,
+            bg="#1e1e1e",
+            fg="#00ffcc",
+        )
+        send_button.pack(padx=10, pady=(0, 5))
 
-        self.suggestion_box = ScrolledText(root, width=80, height=5, state="disabled")
-        self.suggestion_box.pack(padx=5, pady=5)
+        self.suggestion_box = ScrolledText(root, width=80, height=5, state="disabled", **common_opts)
+        self.suggestion_box.pack(padx=10, pady=5)
 
-        self.guidance_box = ScrolledText(root, width=80, height=5, state="disabled")
-        self.guidance_box.pack(padx=5, pady=5)
+        self.guidance_box = ScrolledText(root, width=80, height=5, state="disabled", **common_opts)
+        self.guidance_box.pack(padx=10, pady=5)
 
     def _append_text(self, widget: ScrolledText, text: str) -> None:
         widget.configure(state="normal")
