@@ -24,31 +24,42 @@ greetings = [
 
 
 def generate_contextual_response(user_input: str) -> str | None:
-    """Return a reply that references the previous command’s output."""
-    last_cmd, last_out, _ts = context.get_last()
-    if not last_cmd or not last_out:
+    """Return a reply that references recent command outputs."""
+    config = load_neocortex_config()
+    recent_limit = config.get("memory_retrieval", {}).get("recent_limit", 5)
+
+    history = context.get_history(recent_limit)
+    if not history:
         return None
 
     lower = user_input.lower()
 
+    for cmd, out, _ts in reversed(history):
+        if not cmd or not out:
+            continue
 
-    # Generic catch-all
-    if any(w in lower for w in ("output", "result", last_cmd)):
-        return last_out
+        # Generic catch-all
+        if any(w in lower for w in ("output", "result", cmd)):
+            return out
 
-    # Command-specific helpers
-    if last_cmd == "pwd" and any(k in lower for k in ("where", "directory")):
-        return f"You're currently in `{last_out}`."
+        # Command-specific helpers
+        if cmd == "pwd" and any(k in lower for k in ("where", "directory")):
+            return f"You're currently in `{out}`."
 
-    if last_cmd == "ls" and any(k in lower for k in ("file", "contents")):
-        return f"Here are the files:\n{last_out}"
+        if cmd == "ls" and any(k in lower for k in ("file", "contents")):
+            return f"Here are the files:\n{out}"
 
-    if last_cmd == "whoami" and ("who am i" in lower or "user" in lower):
-        return f"The system reports user `{last_out}`."
+        if cmd == "whoami" and ("who am i" in lower or "user" in lower):
+            return f"The system reports user `{out}`."
 
-    if last_cmd == "scan" and "port" in lower:
-        return last_out
+        if cmd == "scan" and "port" in lower:
+            return out
 
+    # Check conversation history for the last bot reply if requested
+    structured_memory = retrieve_processed_memory()
+    conv_history = structured_memory.get("conversation_history", [])
+    if conv_history and any(k in lower for k in ("last message", "previous message")):
+        return conv_history[-1].get("bot", "")
 
     return None
 
