@@ -7,6 +7,8 @@ JSON configuration files.  A mission statement located in
 `src/models/bot_mission.json` is injected into every prompt so the assistant is
 aware of its hacking mindset.
 
+For authorized testing only.
+
 ## Setup
 
 1. Create and activate a Python 3 virtual environment (optional but recommended).
