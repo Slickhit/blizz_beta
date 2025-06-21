@@ -32,6 +32,7 @@ def ensure_gui_dependencies() -> None:
 
 
 def main() -> None:
+    print("Warning: For authorized testing only.")
     # Handle the global --gui flag before parsing subcommands so it can be used
     # on its own without requiring "chat" or another command.
     if "--gui" in sys.argv:
