@@ -25,14 +25,25 @@ greetings = [
 
 def generate_contextual_response(user_input: str) -> str | None:
     """Return a reply that references recent command outputs."""
+    lower = user_input.lower()
+
+    # Self-awareness shortcut
+    if any(phrase in lower for phrase in (
+        "what are your features",
+        "what can you do",
+        "list your capabilities",
+        "your features",
+        "your capabilities",
+    )):
+        from modules.self_awareness import describe_features
+        return describe_features()
+
     config = load_neocortex_config()
     recent_limit = config.get("memory_retrieval", {}).get("recent_limit", 5)
 
     history = context.get_history(recent_limit)
     if not history:
         return None
-
-    lower = user_input.lower()
 
     for cmd, out, _ts in reversed(history):
         if not cmd or not out:

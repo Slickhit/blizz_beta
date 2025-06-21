@@ -1,0 +1,10 @@
+{
+    "features": [
+        "Whitelisted command execution",
+        "Port scanning via threader, nmap or async methods",
+        "Session event logging",
+        "Contextual memory retrieval for responses",
+        "Module loading and self-improvement",
+        "Simple GUI and CLI interfaces"
+    ]
+}
