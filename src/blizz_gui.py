@@ -18,7 +18,9 @@ class BlizzGUI:
 
         self.input_entry = tk.Entry(root, width=80)
         self.input_entry.pack(padx=5, pady=(0, 5))
-        self.input_entry.bind("<Return>", self.handle_input)
+
+        # Allow pressing Enter anywhere in the window to send the message
+        root.bind("<Return>", self.handle_input)
 
         send_button = tk.Button(root, text="Send", command=self.handle_input)
         send_button.pack(pady=(0, 5))
