@@ -43,7 +43,8 @@ This command automatically checks for Tkinter and attempts to install it if need
 
 
 When it runs, a window appears showing the chat log, an input box and extra
-panes for suggestions and guidance.
+panes for suggestions and guidance. Press **Enter** anywhere in the window to
+send your message or click the **Send** button.
 
 For a full list of commands and options run `./blizz --help`.
 
