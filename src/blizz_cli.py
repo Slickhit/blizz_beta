@@ -51,7 +51,8 @@ def main() -> None:
     )
     subparsers = parser.add_subparsers(dest="command")
 
-    subparsers.add_parser("chat", help="Start chat (default)")
+    chat_parser = subparsers.add_parser("chat", help="Start chat (default)")
+    chat_parser.add_argument("--delete", type=int, help="Delete chat by id")
 
     # Register the GUI launcher so `blizz gui` works from the CLI
     subparsers.add_parser("gui", help="Launch the GUI")
@@ -87,6 +88,11 @@ def main() -> None:
         ensure_gui_dependencies()
         from blizz_gui import main as launch_gui
         launch_gui()
+    elif args.command == "chat" and args.delete:
+        from modules import chat_db
+
+        chat_db.delete_chat(args.delete)
+        print(f"Deleted chat {args.delete}")
     else:
         run_chat()
 
