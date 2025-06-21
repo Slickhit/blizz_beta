@@ -46,6 +46,12 @@ When it runs, a window appears showing the chat log, an input box and extra
 panes for suggestions and guidance. Press **Enter** anywhere in the window to
 send your message or click the **Send** button.
 
+The header now provides two extra buttons:
+- **New Chat** starts a fresh session in a new tab.
+- **Scan** opens a prompt to run the built-in port scanner on a host of your choice.
+
+CLI actions capture their stdout or stderr. The output is stored in `event_log.json` and summarized so you can reference it later in the conversation. The guidance pane updates automatically after each action, showing relevant tips as they are generated.
+
 For a full list of commands and options run `./blizz --help`.
 
 You can also run the built-in port scanner from the command line or from inside
