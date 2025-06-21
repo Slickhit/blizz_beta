@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from models.custom_memory import CustomMemory
 from modules.event_logger import load_events
+from config.config_loader import load_neocortex_config
 
 logger = logging.getLogger(__name__)
 
@@ -13,7 +14,8 @@ load_dotenv()
 
 # Initialize memory and the language model
 memory = CustomMemory()  # Make sure this module has methods to get and update memory
-model_name = "o1-mini"
+# Get model name from configuration, defaulting to "o1-mini" if not specified
+model_name = load_neocortex_config().get("model", "o1-mini")
 processing_bot = ChatOpenAI(model=model_name)
 
 # File to store processed memory
