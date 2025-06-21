@@ -177,6 +177,15 @@ def recon_suggestions(open_ports: Iterable[int]) -> None:
         print(f"- {port} ({name}): {tip}")
 
 
+def recon_suggestions_str(open_ports: Iterable[int]) -> str:
+    """Return recon tips as a formatted string."""
+    lines = []
+    for port in open_ports:
+        name, tip = SERVICE_TIPS.get(port, ("Unknown", "No tips available."))
+        lines.append(f"- {port} ({name}): {tip}")
+    return "\n".join(lines)
+
+
 def interactive_menu(open_ports: List[int]) -> None:
     """Display a simple post-scan menu for educational purposes."""
     if not open_ports:
