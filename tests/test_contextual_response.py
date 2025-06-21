@@ -21,3 +21,12 @@ def test_generate_contextual_response_none():
     context.set_last(None, None)
     resp = chat_handler.generate_contextual_response("where am i?")
     assert resp is None
+
+
+def test_generate_contextual_response_history(monkeypatch):
+    monkeypatch.setattr(chat_handler, "load_neocortex_config", lambda: {"memory_retrieval": {"recent_limit": 5}})
+    monkeypatch.setattr(chat_handler, "retrieve_processed_memory", lambda: {"conversation_history": []})
+    context.set_last("pwd", "/root")
+    context.set_last("ls", "file1\nfile2")
+    resp = chat_handler.generate_contextual_response("show me the files")
+    assert "file1" in resp
