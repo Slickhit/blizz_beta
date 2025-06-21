@@ -6,9 +6,11 @@ from config.config_loader import load_neocortex_config
 
 from modules import event_logger
 from modules import context
+from models.custom_memory import CustomMemory
 
 
 logger = logging.getLogger(__name__)
+memory = CustomMemory()
 
 
 def lazy_import_self_improvement():
@@ -120,7 +122,12 @@ def execute_command(command):
         result = subprocess.run(command_parts, shell=False, capture_output=True, text=True)
         output = result.stdout.strip() or result.stderr.strip()
         event_logger.log_event("command_executed", {"command": command_parts[0], "output": output})
+        event_logger.log_event("tool_output", {"command": command_parts[0], "output": output})
         context.set_last(command_parts[0], output)
+        try:
+            memory.save_context(command, output)
+        except Exception as e:
+            logger.error("Memory save failed: %s", e)
         return output
     except Exception as e:
         logger.error("Command execution error: %s", e)

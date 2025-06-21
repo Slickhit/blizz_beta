@@ -8,10 +8,12 @@ import modules.port_scanner as port_scanner
 import modules.command_executor as command_executor
 import modules.event_logger as event_logger
 import modules.context as context
+import types
 
 
 def test_execute_command_valid(tmp_path, monkeypatch):
     monkeypatch.setattr(event_logger, "EVENT_LOG_FILE", str(tmp_path / "events.json"))
+    monkeypatch.setattr(command_executor, "memory", types.SimpleNamespace(save_context=lambda *a, **k: None))
     context.set_last(None, None)
     output = command_executor.execute_command("echo hello")
     last_cmd, last_out, ts = context.get_last()
@@ -20,6 +22,8 @@ def test_execute_command_valid(tmp_path, monkeypatch):
     assert last_cmd == "echo"
     assert last_out == "hello"
     assert isinstance(ts, float)
+    events = event_logger.load_events()
+    assert any(e["type"] == "tool_output" for e in events)
 
 
 
@@ -31,6 +35,7 @@ def test_execute_command_invalid(tmp_path, monkeypatch):
 
 def test_execute_command_path_traversal(tmp_path, monkeypatch):
     monkeypatch.setattr(event_logger, "EVENT_LOG_FILE", str(tmp_path / "events.json"))
+    monkeypatch.setattr(command_executor, "memory", types.SimpleNamespace(save_context=lambda *a, **k: None))
     secret_file = tmp_path / "secret.txt"
     secret_file.write_text("secret")
     rel_path = os.path.relpath(secret_file, os.getcwd())
@@ -50,6 +55,7 @@ def _start_dummy_server(host="localhost"):
 
 def test_execute_command_scan(monkeypatch, tmp_path):
     monkeypatch.setattr(event_logger, "EVENT_LOG_FILE", str(tmp_path / "events.json"))
+    monkeypatch.setattr(command_executor, "memory", types.SimpleNamespace(save_context=lambda *a, **k: None))
     server, port = _start_dummy_server()
     monkeypatch.setattr(port_scanner, "interactive_menu", lambda ports: None)
     try:
