@@ -81,6 +81,15 @@ def handle_user_input(user_input):
     conversation_history = structured_memory.get("conversation_history", [])
     event_logger.log_event("user_input", {"text": user_input})
 
+    # Detect intent using the lightweight classifier
+    try:
+        from modules.intent_detection import get_intent
+        intent = get_intent(user_input)
+    except Exception:
+        intent = None
+    if intent:
+        event_logger.log_event("intent_detected", {"intent": intent})
+
     # Get guidance from Neuron
     guidance = neuron_advice(user_input, conversation_history, config)
     combined_prompt = f"Neuron's guidance: {guidance}\n\nUser: {user_input}\nBot:"
