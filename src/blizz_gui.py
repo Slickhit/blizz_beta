@@ -8,7 +8,6 @@ from tkinter.scrolledtext import ScrolledText
 
 from modules.chat_handler import generate_contextual_response, handle_user_input
 from modules.command_executor import execute_command
-from modules.port_scanner import scan_target
 from modules import chat_db, summarizer
 from modules.guidance_api import guidance_api
 from modules import dashboard
@@ -26,28 +25,39 @@ class ChatSession:
         self.file_path.parent.mkdir(exist_ok=True)
 
         opts = gui.common_opts
-        self.chat_log = ScrolledText(self.frame, width=80, height=20, state="disabled", **opts)
-        self.chat_log.pack(padx=10, pady=5)
 
-        self.input_entry = tk.Entry(self.frame, width=80, **opts)
+        # ----- Chat area -----
+        chat_frame = tk.Frame(self.frame, bg="#1e1e1e")
+        chat_frame.pack(fill="both", expand=True)
+
+        self.chat_log = ScrolledText(chat_frame, state="disabled", **opts)
+        self.chat_log.pack(padx=10, pady=5, fill="both", expand=True)
+
+        input_wrap = tk.Frame(chat_frame, bg="#1e1e1e")
+        input_wrap.pack(fill="x", padx=10, pady=(0, 5))
+
+        self.input_entry = ScrolledText(input_wrap, height=3, **opts)
         self.input_entry.configure(insertbackground="#00ffcc")
-        self.input_entry.pack(padx=10, pady=(0, 5))
+        self.input_entry.pack(side="left", fill="both", expand=True)
 
         send_button = tk.Button(
-            self.frame,
+            input_wrap,
             text="Send",
             command=self.handle_input,
             bg="#1e1e1e",
             fg="#00ffcc",
         )
-        send_button.pack(padx=10, pady=(0, 5))
+        send_button.pack(side="left", padx=(5, 0))
 
-        self.suggestion_box = ScrolledText(self.frame, width=80, height=5, state="disabled", **opts)
-        self.suggestion_box.pack(padx=10, pady=5)
+        # ----- Logic area -----
+        logic_frame = tk.Frame(self.frame, bg="#002244")
+        logic_frame.pack(fill="both", expand=True, padx=10, pady=(0, 5))
 
-        self.guidance_box = ScrolledText(self.frame, width=80, height=5, state="disabled", **opts)
-        self.guidance_box.pack(padx=10, pady=5)
-        guidance_api.set_widget(self.guidance_box)
+        logic_opts = {"font": ("Courier New", 11), "fg": "#dddddd", "bg": "#002244"}
+        self.logic_box = ScrolledText(logic_frame, height=10, state="disabled", **logic_opts)
+        self.logic_box.pack(fill="both", expand=True)
+
+        guidance_api.set_widget(self.logic_box)
 
         close_btn = tk.Button(
             self.frame,
@@ -104,7 +114,7 @@ class ChatSession:
         suggestion = ""
         guidance = ""
 
-        match = re.search(r"Suggested Response:\s*(.*?)(?:\n\s*[\ud83c-\udfff]*?Guidance:|$)", response, re.S)
+        match = re.search(r"Suggested Response:\s*(.*?)(?:\n\s*Guidance:|$)", response, re.S)
         if match:
             suggestion = match.group(1).strip()
 
@@ -112,24 +122,21 @@ class ChatSession:
         if match:
             guidance = match.group(1).strip()
 
-        self.suggestion_box.configure(state="normal")
-        self.suggestion_box.delete("1.0", tk.END)
+        self.logic_box.configure(state="normal")
+        self.logic_box.delete("1.0", tk.END)
         if suggestion:
-            self.suggestion_box.insert(tk.END, suggestion + "\n")
-        self.suggestion_box.configure(state="disabled")
+            self.logic_box.insert(tk.END, f"Suggested: {suggestion}\n")
+        self.logic_box.configure(state="disabled")
 
-        self.guidance_box.configure(state="normal")
-        self.guidance_box.delete("1.0", tk.END)
-        self.guidance_box.configure(state="disabled")
         if guidance:
-            guidance_api.push(guidance)
+            guidance_api.push(f"Guidance: {guidance}")
 
     def handle_input(self, event=None) -> None:  # type: ignore[override]
-        user_text = self.input_entry.get().strip()
+        user_text = self.input_entry.get("1.0", tk.END).strip()
         if not user_text:
             return
 
-        self.input_entry.delete(0, tk.END)
+        self.input_entry.delete("1.0", tk.END)
         self._append_text(self.chat_log, f"You: {user_text}\n")
         self.chat_log.yview(tk.END)
         self.append_history("user", user_text)
@@ -193,7 +200,7 @@ class BlizzGUI:
         run_button.pack(side="left", padx=(5, 0))
 
         self.common_opts = {
-            "font": ("Courier New", 10),
+            "font": ("Courier New", 12),
             "fg": "#00ffcc",
             "bg": "#1e1e1e",
         }
@@ -245,7 +252,7 @@ class BlizzGUI:
         if self.sessions:
             self.notebook.select(self.sessions[0].frame)
             self.current_session = self.sessions[0]
-            guidance_api.set_widget(self.current_session.guidance_box)
+            guidance_api.set_widget(self.current_session.logic_box)
 
     def scan_prompt(self) -> None:
         target = simpledialog.askstring("Scan", "Target?")
@@ -253,7 +260,7 @@ class BlizzGUI:
             return
         cmd = f"!scan {target}"
         if self.current_session:
-            self.current_session.input_entry.insert(0, cmd)
+            self.current_session.input_entry.insert("1.0", cmd)
             self.current_session.handle_input()
 
     def sniper_prompt(self) -> None:
@@ -262,7 +269,7 @@ class BlizzGUI:
             return
         cmd = f"sniper {ip}"
         if self.current_session:
-            self.current_session.input_entry.insert(0, cmd)
+            self.current_session.input_entry.insert("1.0", cmd)
             self.current_session.handle_input()
 
     def recall_prompt(self) -> None:
@@ -271,7 +278,7 @@ class BlizzGUI:
             return
         cmd = f"recall {ip}"
         if self.current_session:
-            self.current_session.input_entry.insert(0, cmd)
+            self.current_session.input_entry.insert("1.0", cmd)
             self.current_session.handle_input()
 
     def run_prompt(self) -> None:
@@ -280,7 +287,7 @@ class BlizzGUI:
             return
         full_cmd = f"run {cmd}"
         if self.current_session:
-            self.current_session.input_entry.insert(0, full_cmd)
+            self.current_session.input_entry.insert("1.0", full_cmd)
             self.current_session.handle_input()
 
     def _on_tab_change(self, event=None) -> None:
@@ -295,7 +302,7 @@ class BlizzGUI:
             if 0 <= session_idx < len(self.sessions):
                 self.current_session = self.sessions[session_idx]
                 self.current_session.load_history()
-                guidance_api.set_widget(self.current_session.guidance_box)
+                guidance_api.set_widget(self.current_session.logic_box)
 
 
 def main() -> None:
