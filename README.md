@@ -123,6 +123,8 @@ located under `src/models/`:
   history along with recent events.
 - `event_log.json` records command executions and system events. Each entry
   includes a timestamp, type and details object.
+- `memory_store.db` stores summarized messages and their vector embeddings for
+  semantic search.
 
 These files are rewritten as the bot runs and are safe to delete if you want to
 start fresh.
