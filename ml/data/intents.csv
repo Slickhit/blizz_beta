@@ -1,0 +1,10 @@
+text,intent
+hello there,greeting
+hi,greeting
+hey what's up,greeting
+how are you?,question
+what time is it?,question
+where is the file?,question
+run ls,command
+please scan ports,command
+execute whoami,command

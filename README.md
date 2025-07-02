@@ -139,3 +139,11 @@ New modules under `src/modules` provide self-monitoring features:
 - `documentation_generator.py` can regenerate this README with basic details from the current configuration.
 - `self_awareness.py` lists available features from `src/config/features.json`.
 
+## Machine Learning Add-ons
+
+The `ml/` folder provides a simple intent classification pipeline. Run
+`python ml/train.py` to train a small scikit-learn model on
+`ml/data/intents.csv`. Predictions are available through
+`modules.intent_detection.get_intent()` and are logged alongside each user
+message. The model can be retrained automatically via `ml/nightly_retrain.sh`.
+
