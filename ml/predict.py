@@ -1,5 +1,8 @@
 import os
-import joblib
+try:
+    import joblib
+except Exception:  # pragma: no cover
+    joblib = None
 
 from .train import MODEL_PATH
 
@@ -11,8 +14,12 @@ def load_model(path: str = MODEL_PATH):
         if not os.path.exists(path):
             from .train import train_and_save
             _model = train_and_save()
-        else:
+        elif joblib:
             _model = joblib.load(path)
+        else:
+            from .train import train_model, load_dataset
+            texts, labels = load_dataset()
+            _model = train_model(texts, labels)
     return _model
 
 

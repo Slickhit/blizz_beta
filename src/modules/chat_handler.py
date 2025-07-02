@@ -7,6 +7,8 @@ from models.custom_memory import CustomMemory
 from modules.command_executor import execute_command
 from modules import event_logger
 from modules import context
+from modules import summarizer
+from modules.short_term_cache import cache as memory_cache
 
 memory = CustomMemory()
 
@@ -92,7 +94,12 @@ def handle_user_input(user_input):
 
     # Get guidance from Neuron
     guidance = neuron_advice(user_input, conversation_history, config)
-    combined_prompt = f"Neuron's guidance: {guidance}\n\nUser: {user_input}\nBot:"
+    relevant = summarizer.retrieve_relevant(user_input, k=3)
+    context_snippet = "\n".join(relevant)
+    combined_prompt = (
+        f"Relevant context: {context_snippet}\n"
+        f"Neuron's guidance: {guidance}\n\nUser: {user_input}\nBot:"
+    )
 
     # Use the pre-initialized AI model
     response = main_bot.invoke(combined_prompt)
@@ -102,7 +109,8 @@ def handle_user_input(user_input):
         response_text += " 😊"
 
     # Save conversation context
-    memory.save_context(user_input, response_text)
+    memory_cache.add_message(user_input, response_text)
+    summarizer.summarize_and_store("default", user_input)
     event_logger.log_event("bot_response", {"text": response_text})
     return response_text
 
@@ -122,6 +130,7 @@ def chat_loop():
         if user_input.lower() == "exit":
             print("[NEURAL-BOT] >> Exiting secure terminal. Goodbye!")
             event_logger.log_event("session_end")
+            memory_cache.flush()
             break
 
         # ✅ Ensure system commands are detected
