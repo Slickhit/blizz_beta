@@ -34,3 +34,12 @@ def log_event(event_type: str, details: dict | None = None) -> None:
     os.makedirs(os.path.dirname(EVENT_LOG_FILE), exist_ok=True)
     with open(EVENT_LOG_FILE, "w", encoding="utf-8") as f:
         json.dump(events, f, indent=4)
+
+
+def log_feedback(rating: int | str, notes: str | None = None) -> None:
+    """Convenience helper to log user feedback events."""
+    details = {"rating": rating}
+    if notes:
+        details["notes"] = notes
+    log_event("user_feedback", details)
+
