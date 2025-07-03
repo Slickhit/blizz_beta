@@ -28,21 +28,26 @@ class ChatSession:
 
         # ----- Chat area -----
         chat_frame = tk.Frame(self.frame, bg="#1e1e1e")
-        chat_frame.pack(fill="both", expand=True, padx=10, pady=(5, 0))
+        chat_frame.pack(side="top", fill="both", expand=True, padx=10, pady=(5, 0))
 
-        self.chat_log = ScrolledText(chat_frame, state="disabled", **opts)
-        self.chat_log.pack(fill="both", expand=True)
+        chat_opts = {
+            **opts,
+            "fg": "#ffffff",
+            "bg": "#000000",
+        }
+        self.chat_log = ScrolledText(chat_frame, state="disabled", **chat_opts)
+        self.chat_log.pack(side="top", fill="both", expand=True)
 
         # ----- Input area -----
-        input_wrap = tk.Frame(self.frame, bg="#1e1e1e")
-        input_wrap.pack(fill="x", padx=10, pady=5)
+        input_frame = tk.Frame(self.frame, bg="#1e1e1e")
+        input_frame.pack(side="top", fill="x", padx=10, pady=5)
 
-        self.input_entry = ScrolledText(input_wrap, height=3, **opts)
+        self.input_entry = ScrolledText(input_frame, height=3, **opts)
         self.input_entry.configure(insertbackground="#00ffcc")
         self.input_entry.pack(side="left", fill="both", expand=True)
 
         send_button = tk.Button(
-            input_wrap,
+            input_frame,
             text="Send",
             command=self.handle_input,
             bg="#1e1e1e",
@@ -52,9 +57,13 @@ class ChatSession:
 
         # ----- Logic area -----
         logic_frame = tk.Frame(self.frame, bg="#002244")
-        logic_frame.pack(fill="both", expand=True, padx=10, pady=(0, 5))
+        logic_frame.pack(side="top", fill="both", expand=True, padx=10, pady=(0, 5))
 
-        logic_opts = {"font": ("Courier New", 11), "fg": "#dddddd", "bg": "#002244"}
+        logic_opts = {
+            "font": ("Courier New", 11),
+            "fg": "#00ffff",
+            "bg": "#002244",
+        }
         self.logic_box = ScrolledText(logic_frame, height=10, state="disabled", **logic_opts)
         self.logic_box.pack(fill="both", expand=True)
 
