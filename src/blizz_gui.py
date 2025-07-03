@@ -27,10 +27,9 @@ class ChatSession:
         opts = gui.common_opts
 
         # ----- Chat display -----
-       chat_frame = tk.Frame(self.frame, bg="#1e1e1e")
+chat_frame = tk.Frame(self.frame, bg="#1e1e1e")
 chat_frame.pack(fill="both", expand=True, padx=10, pady=(5, 0))
 
-# Apply custom options to chat log
 chat_opts = {
     **opts,
     "fg": "#ffffff",
@@ -39,23 +38,26 @@ chat_opts = {
 self.chat_log = ScrolledText(chat_frame, state="disabled", **chat_opts)
 self.chat_log.pack(fill="both", expand=True)
 
-# ----- Input area -----
-input_wrap = tk.Frame(self.frame, bg="#1e1e1e")  # you can call this input_frame if that's more consistent
+# ----- Input Area -----
+input_wrap = tk.Frame(self.frame, bg="#1e1e1e")  # You can rename to input_frame if you prefer
 input_wrap.pack(fill="x", padx=10, pady=5)
 
+self.input_entry = ScrolledText(input_wrap, height=3, **opts)
+self.input_entry.configure(insertbackground="#00ffcc")
+self.input_entry.pack(side="left", fill="both", expand=True)
+
+send_button = tk.Button(
+    input_wrap,
+    text="Send",
+    command=self.handle_input,
+    fg="#e0e0e0",
+    bg="#0f0f0f",
+)
+send_button.pack(side="left", padx=(5, 0))
 
         self.input_entry = ScrolledText(input_frame, height=3, **opts)
         self.input_entry.configure(insertbackground="#00ffcc")
-        self.input_entry.pack(side="left", fill="both", expand=True)
-
-        send_button = tk.Button(
-            input_frame,
-            text="Send",
-            command=self.handle_input,
-            bg="#1e1e1e",
-            fg="#00ffcc",
-        )
-        send_button.pack(side="left", padx=(5, 0))
+      
 
         # ----- Logic output -----
         logic_frame = tk.Frame(self.frame, bg="#002244")
