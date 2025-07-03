@@ -1,6 +1,7 @@
 import json
 import re
 import threading
+import time
 from pathlib import Path
 import tkinter as tk
 from tkinter import ttk, messagebox, simpledialog
@@ -20,29 +21,34 @@ class ChatSession:
         self.gui = gui
         self.session_id = session_id
         self.frame = tk.Frame(parent, bg="#1e1e1e")
+        self.messages: list[dict] = []
 
-        self.file_path = Path(__file__).resolve().parent.parent / "sessions" / f"session_{session_id}.jsonl"
+        self.file_path = (
+            Path(__file__).resolve().parent.parent
+            / "sessions"
+            / f"session_{session_id}.jsonl"
+        )
         self.file_path.parent.mkdir(exist_ok=True)
 
         opts = gui.common_opts
 
-        # ----- Chat area -----
-        chat_frame = tk.Frame(self.frame, bg="#1e1e1e")
-        chat_frame.pack(fill="both", expand=True, padx=10, pady=(5, 0))
+        # ----- Top frame: conversation history -----
+        top_frame = tk.Frame(self.frame, bg="#1e1e1e")
+        top_frame.pack(fill="both", expand=True, padx=10, pady=(5, 0))
 
-        self.chat_log = ScrolledText(chat_frame, state="disabled", **opts)
+        self.chat_log = ScrolledText(top_frame, state="disabled", **opts)
         self.chat_log.pack(fill="both", expand=True)
 
-        # ----- Input area -----
-        input_wrap = tk.Frame(self.frame, bg="#1e1e1e")
-        input_wrap.pack(fill="x", padx=10, pady=5)
+        # ----- Middle frame: user input -----
+        middle_frame = tk.Frame(self.frame, bg="#1e1e1e")
+        middle_frame.pack(fill="x", padx=10, pady=5)
 
-        self.input_entry = ScrolledText(input_wrap, height=3, **opts)
+        self.input_entry = ScrolledText(middle_frame, height=3, **opts)
         self.input_entry.configure(insertbackground="#00ffcc")
         self.input_entry.pack(side="left", fill="both", expand=True)
 
         send_button = tk.Button(
-            input_wrap,
+            middle_frame,
             text="Send",
             command=self.handle_input,
             bg="#1e1e1e",
@@ -50,12 +56,14 @@ class ChatSession:
         )
         send_button.pack(side="left", padx=(5, 0))
 
-        # ----- Logic area -----
-        logic_frame = tk.Frame(self.frame, bg="#002244")
-        logic_frame.pack(fill="both", expand=True, padx=10, pady=(0, 5))
+        # ----- Bottom frame: system output -----
+        bottom_frame = tk.Frame(self.frame, bg="#002244")
+        bottom_frame.pack(fill="both", expand=True, padx=10, pady=(0, 5))
 
         logic_opts = {"font": ("Courier New", 11), "fg": "#dddddd", "bg": "#002244"}
-        self.logic_box = ScrolledText(logic_frame, height=10, state="disabled", **logic_opts)
+        self.logic_box = ScrolledText(
+            bottom_frame, height=10, state="disabled", **logic_opts
+        )
         self.logic_box.pack(fill="both", expand=True)
 
         guidance_api.set_widget(self.logic_box)
@@ -90,14 +98,30 @@ class ChatSession:
         widget.configure(state="disabled")
         widget.see(tk.END)
 
+    def render_to_top(self, msg: dict) -> None:
+        prefix = "You" if msg["type"] == "user_input" else "Bot"
+        self._append_text(self.chat_log, f"{prefix}: {msg['content']}\n")
+
+    def render_to_bottom(self, msg: dict) -> None:
+        self._append_text(self.logic_box, msg["content"] + "\n")
+
+    def render_message(self, msg: dict) -> None:
+        if msg["type"] in ("user_input", "assistant_response"):
+            self.render_to_top(msg)
+        elif msg["type"] == "system_output":
+            self.render_to_bottom(msg)
+
     def append_history(self, role: str, text: str) -> None:
         with open(self.file_path, "a", encoding="utf-8") as f:
             f.write(json.dumps({"role": role, "text": text}) + "\n")
         chat_db.record_message(self.session_id, role, text)
 
     def load_history(self) -> None:
+        self.messages.clear()
         self.chat_log.configure(state="normal")
         self.chat_log.delete("1.0", tk.END)
+        self.logic_box.configure(state="normal")
+        self.logic_box.delete("1.0", tk.END)
         if self.file_path.exists():
             try:
                 with open(self.file_path, "r", encoding="utf-8") as f:
@@ -105,11 +129,14 @@ class ChatSession:
                         entry = json.loads(line)
                         role = entry.get("role", "")
                         text = entry.get("text", "")
-                        prefix = "You" if role == "user" else "Bot"
-                        self.chat_log.insert(tk.END, f"{prefix}: {text}\n")
+                        mtype = "user_input" if role == "user" else "assistant_response"
+                        self.messages.append({"type": mtype, "content": text})
             except json.JSONDecodeError:
                 pass
+        for msg in self.messages:
+            self.render_message(msg)
         self.chat_log.configure(state="disabled")
+        self.logic_box.configure(state="disabled")
 
     def parse_response(self, response: str) -> tuple[str, str]:
         """Split a raw bot reply into chat text and system thinking."""
@@ -117,10 +144,17 @@ class ChatSession:
         guidance = ""
         cleaned = response
 
-        match = re.search(r"Suggested Response:\s*(.*?)(?:\n\s*Guidance:|$)", cleaned, re.S)
+        match = re.search(
+            r"Suggested Response:\s*(.*?)(?:\n\s*Guidance:|$)", cleaned, re.S
+        )
         if match:
             suggestion = match.group(1).strip()
-            cleaned = re.sub(r"Suggested Response:\s*(.*?)(?:\n\s*Guidance:|$)", "", cleaned, flags=re.S).strip()
+            cleaned = re.sub(
+                r"Suggested Response:\s*(.*?)(?:\n\s*Guidance:|$)",
+                "",
+                cleaned,
+                flags=re.S,
+            ).strip()
 
         match = re.search(r"Guidance:\s*(.*)", cleaned, re.S)
         if match:
@@ -151,10 +185,14 @@ class ChatSession:
         return self.parse_response(str(response))
 
     def update_displays(self, chat_text: str, logic_text: str) -> None:
-        """Insert messages into the chat and logic panes."""
-        self._append_text(self.chat_log, chat_text + "\n\n")
+        """Insert messages into the chat and logic panes via dispatcher."""
+        chat_msg = {"type": "assistant_response", "content": chat_text}
+        self.messages.append(chat_msg)
+        self.render_message(chat_msg)
         if logic_text:
-            self._append_text(self.logic_box, logic_text + "\n\n")
+            sys_msg = {"type": "system_output", "content": logic_text}
+            self.messages.append(sys_msg)
+            self.render_message(sys_msg)
 
     def handle_input(self, event=None) -> None:  # type: ignore[override]
         user_text = self.input_entry.get("1.0", tk.END).strip()
@@ -162,10 +200,19 @@ class ChatSession:
             return
 
         self.input_entry.delete("1.0", tk.END)
-        self._append_text(self.chat_log, f"You: {user_text}\n")
+        user_msg = {
+            "type": "user_input",
+            "content": user_text,
+            "timestamp": time.time(),
+        }
+        self.messages.append(user_msg)
+        self.render_message(user_msg)
         self.chat_log.yview(tk.END)
         self.append_history("user", user_text)
 
+        threading.Thread(target=self._process_input, args=(user_text,)).start()
+
+    def _process_input(self, user_text: str) -> None:
         if user_text.lower() == "exit":
             self.gui.root.quit()
             return
@@ -199,6 +246,9 @@ class ChatSession:
                 response = handle_user_input(user_text)
 
         chat_txt, logic_txt = self.structure_response(response)
+        self.gui.root.after(0, lambda: self._handle_response(chat_txt, logic_txt))
+
+    def _handle_response(self, chat_txt: str, logic_txt: str) -> None:
         self.update_displays(f"Bot: {chat_txt}", logic_txt)
         self.append_history("bot", chat_txt)
 
@@ -213,27 +263,55 @@ class BlizzGUI:
 
         header = tk.Frame(root, bg="#1e1e1e")
         header.pack(anchor="nw", pady=(5, 0))
-        logo_path = Path(__file__).resolve().parent.parent / "assets" / "blizz_netic_logo.png"
+        logo_path = (
+            Path(__file__).resolve().parent.parent / "assets" / "blizz_netic_logo.png"
+        )
         try:
             self.logo_img = tk.PhotoImage(file=str(logo_path))
             self.logo_small = self.logo_img.subsample(4, 4)
-            tk.Label(header, image=self.logo_small, bg="#1e1e1e").pack(side="left", padx=(10, 5))
+            tk.Label(header, image=self.logo_small, bg="#1e1e1e").pack(
+                side="left", padx=(10, 5)
+            )
         except Exception:
-            tk.Label(header, text="Blizz", bg="#1e1e1e", fg="#00ffcc").pack(side="left", padx=(10, 5))
+            tk.Label(header, text="Blizz", bg="#1e1e1e", fg="#00ffcc").pack(
+                side="left", padx=(10, 5)
+            )
 
-        new_button = tk.Button(header, text="New Chat", command=self.add_session, bg="#1e1e1e", fg="#00ffcc")
+        new_button = tk.Button(
+            header,
+            text="New Chat",
+            command=self.add_session,
+            bg="#1e1e1e",
+            fg="#00ffcc",
+        )
         new_button.pack(side="left")
 
-        scan_button = tk.Button(header, text="Scan", command=self.scan_prompt, bg="#1e1e1e", fg="#00ffcc")
+        scan_button = tk.Button(
+            header, text="Scan", command=self.scan_prompt, bg="#1e1e1e", fg="#00ffcc"
+        )
         scan_button.pack(side="left", padx=(5, 0))
 
-        sniper_button = tk.Button(header, text="Sn1per", command=self.sniper_prompt, bg="#1e1e1e", fg="#00ffcc")
+        sniper_button = tk.Button(
+            header,
+            text="Sn1per",
+            command=self.sniper_prompt,
+            bg="#1e1e1e",
+            fg="#00ffcc",
+        )
         sniper_button.pack(side="left", padx=(5, 0))
 
-        recall_button = tk.Button(header, text="Recall", command=self.recall_prompt, bg="#1e1e1e", fg="#00ffcc")
+        recall_button = tk.Button(
+            header,
+            text="Recall",
+            command=self.recall_prompt,
+            bg="#1e1e1e",
+            fg="#00ffcc",
+        )
         recall_button.pack(side="left", padx=(5, 0))
 
-        run_button = tk.Button(header, text="Run", command=self.run_prompt, bg="#1e1e1e", fg="#00ffcc")
+        run_button = tk.Button(
+            header, text="Run", command=self.run_prompt, bg="#1e1e1e", fg="#00ffcc"
+        )
         run_button.pack(side="left", padx=(5, 0))
 
         self.common_opts = {
@@ -258,7 +336,12 @@ class BlizzGUI:
         if not self.sessions:
             self.add_session()
 
-        root.bind("<Return>", lambda e: self.current_session.handle_input() if self.current_session else None)
+        root.bind(
+            "<Return>",
+            lambda e: (
+                self.current_session.handle_input() if self.current_session else None
+            ),
+        )
 
     def add_session(self) -> None:
         session_id = len(self.sessions) + 1
