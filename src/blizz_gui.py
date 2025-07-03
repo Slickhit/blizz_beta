@@ -27,20 +27,22 @@ class ChatSession:
         opts = gui.common_opts
 
         # ----- Chat display -----
-        chat_frame = tk.Frame(self.frame, bg="#1e1e1e")
-        chat_frame.pack(side="top", fill="both", expand=True, padx=10, pady=(5, 0))
+       chat_frame = tk.Frame(self.frame, bg="#1e1e1e")
+chat_frame.pack(fill="both", expand=True, padx=10, pady=(5, 0))
 
-        chat_opts = {
-            **opts,
-            "fg": "#ffffff",
-            "bg": "#000000",
-        }
-        self.chat_log = ScrolledText(chat_frame, state="disabled", **chat_opts)
-        self.chat_log.pack(fill="both", expand=True)
+# Apply custom options to chat log
+chat_opts = {
+    **opts,
+    "fg": "#ffffff",
+    "bg": "#000000",
+}
+self.chat_log = ScrolledText(chat_frame, state="disabled", **chat_opts)
+self.chat_log.pack(fill="both", expand=True)
 
-        # ----- Input field -----
-        input_frame = tk.Frame(self.frame, bg="#1e1e1e")
-        input_frame.pack(side="top", fill="x", padx=10, pady=5)
+# ----- Input area -----
+input_wrap = tk.Frame(self.frame, bg="#1e1e1e")  # you can call this input_frame if that's more consistent
+input_wrap.pack(fill="x", padx=10, pady=5)
+
 
         self.input_entry = ScrolledText(input_frame, height=3, **opts)
         self.input_entry.configure(insertbackground="#00ffcc")
