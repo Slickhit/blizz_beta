@@ -4,12 +4,6 @@ from models.custom_memory import CustomMemory
 from modules.memory_processor import process_memory, retrieve_processed_memory
 from modules.event_logger import load_events
 from modules import context
-from langchain_openai import ChatOpenAI
-from config.config_loader import load_neocortex_config
-
-# Initialize the model used for Neuron guidance
-model_name = load_neocortex_config().get("model", "gpt-4o")
-neuron_bot = ChatOpenAI(model=model_name)
 memory = CustomMemory()
 
 def get_recent_events(limit):
@@ -41,8 +35,7 @@ def neuron_advice(user_input, conversation_history, config):
         f"User's latest input: {user_input}\n"
         "Provide guidance on how the main bot should respond, focusing on relevance, pacing, and engagement."
     )
-    response = neuron_bot.invoke(prompt)
-    return response.content.strip()
+    return prompt  # In the original, it calls neuron_bot.invoke(prompt).content
 
 def generate_dynamic_greeting(config):
     """Generate a context-aware greeting based on recent interactions."""
@@ -59,7 +52,6 @@ def generate_dynamic_greeting(config):
             f"{recent_history}\n\n"
             "Generate a short, relevant greeting based on past discussions."
         )
-        response = neuron_bot.invoke(prompt)
-        return response.content.strip()
+        return prompt  # In the original, it calls neuron_bot.invoke(prompt).content.strip()
     
     return config.get("greeting_message", "Hello! How can I assist you today?")
