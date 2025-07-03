@@ -55,8 +55,7 @@ send_button = tk.Button(
 )
 send_button.pack(side="left", padx=(5, 0))
 
-        self.input_entry = ScrolledText(input_frame, height=3, **opts)
-        self.input_entry.configure(insertbackground="#00ffcc")
+        
       
 
         # ----- Logic output -----
