@@ -1,8 +1,13 @@
+import json
 import random
 import time
 from langchain_openai import ChatOpenAI
 from config.config_loader import load_neocortex_config
-from modules.memory_handler import retrieve_processed_memory, neuron_advice, process_memory
+from modules.memory_handler import (
+    retrieve_processed_memory,
+    neuron_advice,
+    process_memory,
+)
 from models.custom_memory import CustomMemory
 from modules.command_executor import execute_command
 from modules import event_logger
@@ -77,7 +82,7 @@ def generate_contextual_response(user_input: str) -> str | None:
     return None
 
 def handle_user_input(user_input):
-    """Process a single exchange and return the bot's response."""
+    """Process a single exchange and return a structured response."""
     config = load_neocortex_config()
     structured_memory = retrieve_processed_memory()
     conversation_history = structured_memory.get("conversation_history", [])
@@ -108,11 +113,30 @@ def handle_user_input(user_input):
     if config.get("use_emoji"):
         response_text += " 😊"
 
-    # Save conversation context
-    memory_cache.add_message(user_input, response_text)
+    try:
+        data = json.loads(response_text)
+        if isinstance(data, dict) and "final_response" in data:
+            structured = {
+                "final_response": data.get("final_response", ""),
+                "thought_process": data.get("thought_process", ""),
+                "classifications": data.get("classifications", ""),
+                "logic_notes": data.get("logic_notes", ""),
+            }
+        else:
+            raise ValueError
+    except Exception:
+        structured = {
+            "final_response": response_text,
+            "thought_process": "",
+            "classifications": "",
+            "logic_notes": "",
+        }
+
+    # Save conversation context using only the final response
+    memory_cache.add_message(user_input, structured["final_response"])
     summarizer.summarize_and_store("default", user_input)
-    event_logger.log_event("bot_response", {"text": response_text})
-    return response_text
+    event_logger.log_event("bot_response", {"text": structured["final_response"]})
+    return structured
 
 def chat_loop():
     """Main chat loop that handles each conversation exchange."""
@@ -136,11 +160,21 @@ def chat_loop():
         # ✅ Ensure system commands are detected
         if user_input.startswith("!"):
             command = user_input[1:].strip()  # Remove "!" and extra spaces
-            bot_response = execute_command(command)
+            bot_response = {
+                "final_response": execute_command(command),
+                "thought_process": "",
+                "classifications": "",
+                "logic_notes": "",
+            }
         else:
             ctx_resp = generate_contextual_response(user_input)
             if ctx_resp is not None:
-                bot_response = ctx_resp
+                bot_response = {
+                    "final_response": ctx_resp,
+                    "thought_process": "",
+                    "classifications": "",
+                    "logic_notes": "",
+                }
             else:
                 bot_response = handle_user_input(user_input)
 
@@ -151,5 +185,13 @@ def chat_loop():
             process_memory()
             last_memory_process = time.time()
 
-        print("[NEURAL-BOT] >>", bot_response)
+        print("[NEURAL-BOT] >>", bot_response.get("final_response", ""))
+        logic_lines = []
+        for key in ("thought_process", "classifications", "logic_notes"):
+            val = bot_response.get(key)
+            if val:
+                logic_lines.append(f"{key}: {val}")
+        if logic_lines:
+            print("---")
+            print("\n".join(logic_lines))
         event_logger.log_event("exchange", {"count": exchange_count})

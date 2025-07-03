@@ -17,5 +17,5 @@ def test_handle_user_input_appends_emoji(monkeypatch):
     monkeypatch.setattr(chat_handler.event_logger, "log_event", lambda *a, **k: None)
 
     result = chat_handler.handle_user_input("hi")
-    assert "hello" in result
-    assert "😊" in result
+    assert isinstance(result, dict)
+    assert result["final_response"] == "hello 😊"
