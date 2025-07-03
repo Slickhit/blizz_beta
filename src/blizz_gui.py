@@ -136,6 +136,19 @@ class ChatSession:
         logic_text = "\n".join(logic_parts)
         return cleaned, logic_text
 
+    def structure_response(self, response: str | dict) -> tuple[str, str]:
+        """Handle structured dicts or raw strings for display."""
+        if isinstance(response, dict):
+            chat_txt = response.get("final_response", "")
+            logic_parts = []
+            for key in ("thought_process", "classifications", "logic_notes"):
+                val = response.get(key)
+                if val:
+                    label = key.replace("_", " ").title()
+                    logic_parts.append(f"{label}: {val}")
+            return chat_txt, "\n".join(logic_parts)
+        return self.parse_response(str(response))
+
     def update_displays(self, chat_text: str, logic_text: str) -> None:
         """Insert messages into the chat and logic panes."""
         self._append_text(self.chat_log, chat_text + "\n\n")
@@ -158,20 +171,33 @@ class ChatSession:
 
         if user_text.startswith("!"):
             command = user_text[1:].strip()
-            response = execute_command(command)
+            response = {
+                "final_response": execute_command(command),
+                "thought_process": "",
+                "classifications": "",
+                "logic_notes": "",
+            }
             try:
                 from guidance import manager as guidance_manager
 
-                hint = guidance_manager.generate(command, response)
+                hint = guidance_manager.generate(command, response["final_response"])
                 if hint:
                     guidance_api.push(hint)
             except Exception:
                 pass
         else:
             ctx_resp = generate_contextual_response(user_text)
-            response = ctx_resp if ctx_resp is not None else handle_user_input(user_text)
+            if ctx_resp is not None:
+                response = {
+                    "final_response": ctx_resp,
+                    "thought_process": "",
+                    "classifications": "",
+                    "logic_notes": "",
+                }
+            else:
+                response = handle_user_input(user_text)
 
-        chat_txt, logic_txt = self.parse_response(response)
+        chat_txt, logic_txt = self.structure_response(response)
         self.update_displays(f"Bot: {chat_txt}", logic_txt)
         self.append_history("bot", chat_txt)
 
