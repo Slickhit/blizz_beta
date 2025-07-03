@@ -147,6 +147,15 @@ class ChatSession:
             chat, logic = response.split("[[THINK]]", 1)
             return chat.strip(), logic.strip()
 
+        # Fallback for "Bot: Bot:" style thinking. If present treat everything
+        # from the second "Bot:" onward as raw logic meant for the bottom pane.
+        botbot = re.search(r"(Bot:\s*Bot:.*)", response, re.DOTALL)
+        if botbot:
+            chat = response[: botbot.start()].strip()
+            logic = botbot.group(1).strip()
+            chat = re.sub(r"^\s*Bot:\s*", "", chat).strip()
+            return chat, logic
+
         suggestion = ""
         guidance = ""
         cleaned = response
@@ -199,10 +208,11 @@ class ChatSession:
         return self.parse_response(str(response))
 
     def update_displays(self, chat_text: str, logic_text: str) -> None:
-        """Insert messages into the chat pane and raw logic into the bottom pane."""
-        chat_msg = {"type": "assistant_response", "content": chat_text}
-        self.messages.append(chat_msg)
-        self.render_message(chat_msg)
+        """Insert chat text and logic output into their respective panes."""
+        if chat_text:
+            chat_msg = {"type": "assistant_response", "content": chat_text}
+            self.messages.append(chat_msg)
+            self.render_message(chat_msg)
 
         # Logic text should not be treated as a persistent message. It is
         # appended only to the logic box for debugging purposes.
@@ -264,7 +274,9 @@ class ChatSession:
         self.gui.root.after(0, lambda: self._handle_response(chat_txt, logic_txt))
 
     def _handle_response(self, chat_txt: str, logic_txt: str) -> None:
-        self.update_displays(f"Bot: {chat_txt}", logic_txt)
+        # update_displays already prefixes bot messages, so pass the raw text
+        # to avoid duplicating the label.
+        self.update_displays(chat_txt, logic_txt)
         self.append_history("bot", chat_txt)
         if hasattr(self.gui, "dashboard"):
             dashboard.refresh_dashboard()

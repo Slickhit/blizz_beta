@@ -1,6 +1,7 @@
 import types
 from blizz_gui import ChatSession
 
+
 class DummyWidget:
     def __init__(self):
         self.content = ""
@@ -28,7 +29,7 @@ def make_session():
 def test_think_delimiter_logic_bottom_only():
     session = make_session()
     chat, logic = session.parse_response("hello[[THINK]]logic goes here")
-    session.update_displays(f"Bot: {chat}", logic)
+    session.update_displays(chat, logic)
     assert "hello" in session.chat_log.content
     assert "logic goes here" in session.logic_box.content
     assert "logic goes here" not in session.chat_log.content
@@ -37,12 +38,49 @@ def test_think_delimiter_logic_bottom_only():
 
 def test_structured_keys_logic_bottom_only():
     session = make_session()
-    chat, logic = session.structure_response({
-        "user_facing_response": "hey",
-        "bot_logic_output": "some reasoning",
-    })
-    session.update_displays(f"Bot: {chat}", logic)
+    chat, logic = session.structure_response(
+        {
+            "user_facing_response": "hey",
+            "bot_logic_output": "some reasoning",
+        }
+    )
+    session.update_displays(chat, logic)
     assert "Bot: hey" in session.chat_log.content
     assert "some reasoning" in session.logic_box.content
     assert "some reasoning" not in session.chat_log.content
     assert len(session.messages) == 1
+
+
+def test_botbot_logic_extracted():
+    session = make_session()
+    chat, logic = session.parse_response("Hi there Bot: Bot: internal")
+    session.update_displays(chat, logic)
+    assert "Hi there" in session.chat_log.content
+    assert "Bot: Bot: internal" in session.logic_box.content
+    assert "Bot: Bot: internal" not in session.chat_log.content
+    assert len(session.messages) == 1
+
+
+def test_logic_only_skips_chat():
+    session = make_session()
+    chat, logic = session.parse_response("Bot: Bot: full instruction")
+    session.update_displays(chat, logic)
+    assert session.chat_log.content == ""
+    assert "Bot: Bot: full instruction" in session.logic_box.content
+    assert len(session.messages) == 0
+
+
+def test_leading_label_removed():
+    session = make_session()
+    chat, logic = session.parse_response("Bot: hi there Bot: Bot: why")
+    session.update_displays(chat, logic)
+    assert session.chat_log.content.strip() == "Bot: hi there"
+    assert session.messages[0]["content"] == "hi there"
+    assert "Bot: Bot: why" in session.logic_box.content
+
+
+def test_leading_spaces_trimmed():
+    session = make_session()
+    chat, logic = session.parse_response("   Bot: hi again  Bot: Bot: reason  ")
+    session.update_displays(chat, logic)
+    assert session.messages[0]["content"] == "hi again"
