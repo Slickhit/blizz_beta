@@ -205,6 +205,47 @@ class ChatSession:
         self.append_history("bot", chat_txt)
 
 
+class BlizzGUI:
+    def __init__(self, root: tk.Tk) -> None:
+        self.root = root
+        root.title("Blizz Beta")
+        root.configure(bg="#1e1e1e")
+
+        self.common_opts = {
+            "font": ("Courier New", 12),
+            "fg": "#00ffcc",
+            "bg": "#1e1e1e",
+        }
+
+        self.notebook = ttk.Notebook(root)
+        self.notebook.pack(expand=True, fill="both")
+
+        self.sessions: list[ChatSession] = []
+        self.current_session: ChatSession | None = None
+
+        self.add_session()
+
+        root.bind("<Return>", lambda e: self.current_session.handle_input() if self.current_session else None)
+
+    def add_session(self) -> None:
+        session_id = len(self.sessions) + 1
+        session = ChatSession(self, self.notebook, session_id)
+        self.sessions.append(session)
+        self.notebook.add(session.frame, text=f"Chat {session_id}")
+        self.notebook.select(session.frame)
+        self.current_session = session
+
+    def delete_session(self, session: ChatSession) -> None:
+        idx = self.sessions.index(session)
+        self.notebook.forget(session.frame)
+        session.cleanup()
+        self.sessions.remove(session)
+        if self.sessions:
+            self.current_session = self.sessions[max(0, idx - 1)]
+            self.notebook.select(self.current_session.frame)
+        else:
+            self.add_session()
+
 def main():
     root = tk.Tk()
     app = BlizzGUI(root)
