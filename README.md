@@ -52,6 +52,18 @@ The header now provides two extra buttons:
 - **New Chat** starts a fresh session in a new tab.
 - **Scan** opens a prompt to run the built-in port scanner on a host of your choice.
 
+The interface also features a **Dashboard** tab summarising recent activity. It
+lists the latest events, shows a snippet of conversation history and displays
+ports from your most recent scan. The amount of chat history displayed is
+controlled by the `history_limit` argument in `dashboard.gather_data()` (default
+`5`), so increase that value if you want more context visible.
+
+Each chat window includes a lower **Logic** pane. Bot replies can contain a
+`[[THINK]]` block or the keys `user_facing_response` and `bot_logic_output` to
+separate system reasoning from the normal chat text. Anything after the tag or
+inside `bot_logic_output` is routed to this logic pane while the main chat stays
+clean.
+
 CLI actions capture their stdout or stderr. The output is stored in `event_log.json` and summarized so you can reference it later in the conversation. The guidance pane updates automatically after each action, showing relevant tips as they are generated.
 
 For a full list of commands and options run `./blizz --help`.
