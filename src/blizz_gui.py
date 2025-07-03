@@ -203,3 +203,9 @@ class ChatSession:
         chat_txt, logic_txt = self.structure_response(response)
         self.update_displays(f"Bot: {chat_txt}", logic_txt)
         self.append_history("bot", chat_txt)
+
+
+def main():
+    root = tk.Tk()
+    app = BlizzGUI(root)
+    root.mainloop()
