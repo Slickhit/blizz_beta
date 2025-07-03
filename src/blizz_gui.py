@@ -207,10 +207,11 @@ class ChatSession:
         return self.parse_response(str(response))
 
     def update_displays(self, chat_text: str, logic_text: str) -> None:
-        """Insert messages into the chat pane and raw logic into the bottom pane."""
-        chat_msg = {"type": "assistant_response", "content": chat_text}
-        self.messages.append(chat_msg)
-        self.render_message(chat_msg)
+        """Insert chat text and logic output into their respective panes."""
+        if chat_text:
+            chat_msg = {"type": "assistant_response", "content": chat_text}
+            self.messages.append(chat_msg)
+            self.render_message(chat_msg)
 
         # Logic text should not be treated as a persistent message. It is
         # appended only to the logic box for debugging purposes.
