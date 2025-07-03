@@ -110,17 +110,21 @@ class ChatSession:
                 pass
         self.chat_log.configure(state="disabled")
 
-    def update_boxes(self, response: str) -> None:
+    def update_boxes(self, response: str) -> str:
+        """Display system thinking in logic pane and return clean reply."""
         suggestion = ""
         guidance = ""
+        cleaned = response
 
-        match = re.search(r"Suggested Response:\s*(.*?)(?:\n\s*Guidance:|$)", response, re.S)
+        match = re.search(r"Suggested Response:\s*(.*?)(?:\n\s*Guidance:|$)", cleaned, re.S)
         if match:
             suggestion = match.group(1).strip()
+            cleaned = re.sub(r"Suggested Response:\s*(.*?)(?:\n\s*Guidance:|$)", "", cleaned, flags=re.S).strip()
 
-        match = re.search(r"Guidance:\s*(.*)", response, re.S)
+        match = re.search(r"Guidance:\s*(.*)", cleaned, re.S)
         if match:
             guidance = match.group(1).strip()
+            cleaned = re.sub(r"Guidance:\s*(.*)", "", cleaned, flags=re.S).strip()
 
         self.logic_box.configure(state="normal")
         self.logic_box.delete("1.0", tk.END)
@@ -130,6 +134,8 @@ class ChatSession:
 
         if guidance:
             guidance_api.push(f"Guidance: {guidance}")
+
+        return cleaned
 
     def handle_input(self, event=None) -> None:  # type: ignore[override]
         user_text = self.input_entry.get("1.0", tk.END).strip()
@@ -160,10 +166,10 @@ class ChatSession:
             ctx_resp = generate_contextual_response(user_text)
             response = ctx_resp if ctx_resp is not None else handle_user_input(user_text)
 
-        self._append_text(self.chat_log, f"Bot: {response}\n")
+        cleaned = self.update_boxes(response)
+        self._append_text(self.chat_log, f"Bot: {cleaned}\n")
         self.chat_log.yview(tk.END)
-        self.update_boxes(response)
-        self.append_history("bot", response)
+        self.append_history("bot", cleaned)
 
 
 class BlizzGUI:
