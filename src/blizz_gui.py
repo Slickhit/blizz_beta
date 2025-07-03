@@ -17,6 +17,10 @@ from modules import dashboard
 class ChatSession:
     """Representation of a single chat session."""
 
+    _INSTRUCTION_PREFIXES = (
+        "Bot: The main bot should respond",
+    )
+
     def __init__(self, gui: "BlizzGUI", parent: ttk.Notebook, session_id: int) -> None:
         self.gui = gui
         self.session_id = session_id
@@ -146,6 +150,12 @@ class ChatSession:
         if "[[THINK]]" in response:
             chat, logic = response.split("[[THINK]]", 1)
             return chat.strip(), logic.strip()
+
+        # Entire response is leaked instructions
+        stripped = response.strip()
+        for pref in self._INSTRUCTION_PREFIXES:
+            if stripped.startswith(pref):
+                return "", stripped
 
         # Fallback for "Bot: Bot:" style thinking. If present treat everything
         # from the second "Bot:" onward as raw logic meant for the bottom pane.
