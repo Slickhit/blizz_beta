@@ -153,10 +153,8 @@ class ChatSession:
         if botbot:
             chat = response[: botbot.start()].strip()
             logic = botbot.group(1).strip()
-logic = botbot.group(1).strip()
-            # strip any leading “Bot:” prefix from the chat segment
-            chat  = re.sub(r"^\s*Bot:\s*", "", chat).strip()
-            return chat, logic
+            # strip any leading "Bot:" prefix from the chat segment
+            chat = re.sub(r"^\s*Bot:\s*", "", chat).strip()
             return chat, logic
 
         suggestion = ""

@@ -1,5 +1,6 @@
 from typing import Tuple, Dict, Any
 import types
+import re
 
 
 class ChatSession:
@@ -43,7 +44,9 @@ class ChatSession:
         if dbl in raw:
             chat, logic = raw.split(dbl, 1)
             logic = f"{dbl}{logic}"  # keep trigger inside logic
-            return chat.strip(), logic.strip()
+            # remove any leading "Bot:" prefix from the chat portion
+            chat = re.sub(r"^\s*Bot:\s*", "", chat).strip()
+            return chat, logic.strip()
 
         # 4. Pure chat
         return raw, ""
