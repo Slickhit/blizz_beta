@@ -28,13 +28,14 @@ class ChatSession:
 
         # ----- Chat area -----
         chat_frame = tk.Frame(self.frame, bg="#1e1e1e")
-        chat_frame.pack(fill="both", expand=True)
+        chat_frame.pack(fill="both", expand=True, padx=10, pady=(5, 0))
 
         self.chat_log = ScrolledText(chat_frame, state="disabled", **opts)
-        self.chat_log.pack(padx=10, pady=5, fill="both", expand=True)
+        self.chat_log.pack(fill="both", expand=True)
 
-        input_wrap = tk.Frame(chat_frame, bg="#1e1e1e")
-        input_wrap.pack(fill="x", padx=10, pady=(0, 5))
+        # ----- Input area -----
+        input_wrap = tk.Frame(self.frame, bg="#1e1e1e")
+        input_wrap.pack(fill="x", padx=10, pady=5)
 
         self.input_entry = ScrolledText(input_wrap, height=3, **opts)
         self.input_entry.configure(insertbackground="#00ffcc")
