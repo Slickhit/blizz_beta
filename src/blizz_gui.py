@@ -266,6 +266,8 @@ class ChatSession:
     def _handle_response(self, chat_txt: str, logic_txt: str) -> None:
         self.update_displays(f"Bot: {chat_txt}", logic_txt)
         self.append_history("bot", chat_txt)
+        if hasattr(self.gui, "dashboard"):
+            dashboard.refresh_dashboard()
 
 
 class BlizzGUI:
