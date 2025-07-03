@@ -110,8 +110,8 @@ class ChatSession:
                 pass
         self.chat_log.configure(state="disabled")
 
-    def update_boxes(self, response: str) -> str:
-        """Display system thinking in logic pane and return clean reply."""
+    def parse_response(self, response: str) -> tuple[str, str]:
+        """Split a raw bot reply into chat text and system thinking."""
         suggestion = ""
         guidance = ""
         cleaned = response
@@ -126,16 +126,21 @@ class ChatSession:
             guidance = match.group(1).strip()
             cleaned = re.sub(r"Guidance:\s*(.*)", "", cleaned, flags=re.S).strip()
 
-        self.logic_box.configure(state="normal")
-        self.logic_box.delete("1.0", tk.END)
+        logic_parts = []
         if suggestion:
-            self.logic_box.insert(tk.END, f"Suggested: {suggestion}\n")
-        self.logic_box.configure(state="disabled")
-
+            logic_parts.append(f"Suggested: {suggestion}")
         if guidance:
+            logic_parts.append(f"Guidance: {guidance}")
             guidance_api.push(f"Guidance: {guidance}")
 
-        return cleaned
+        logic_text = "\n".join(logic_parts)
+        return cleaned, logic_text
+
+    def update_displays(self, chat_text: str, logic_text: str) -> None:
+        """Insert messages into the chat and logic panes."""
+        self._append_text(self.chat_log, chat_text + "\n\n")
+        if logic_text:
+            self._append_text(self.logic_box, logic_text + "\n\n")
 
     def handle_input(self, event=None) -> None:  # type: ignore[override]
         user_text = self.input_entry.get("1.0", tk.END).strip()
@@ -166,10 +171,9 @@ class ChatSession:
             ctx_resp = generate_contextual_response(user_text)
             response = ctx_resp if ctx_resp is not None else handle_user_input(user_text)
 
-        cleaned = self.update_boxes(response)
-        self._append_text(self.chat_log, f"Bot: {cleaned}\n")
-        self.chat_log.yview(tk.END)
-        self.append_history("bot", cleaned)
+        chat_txt, logic_txt = self.parse_response(response)
+        self.update_displays(f"Bot: {chat_txt}", logic_txt)
+        self.append_history("bot", chat_txt)
 
 
 class BlizzGUI:
