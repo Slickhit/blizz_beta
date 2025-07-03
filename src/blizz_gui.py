@@ -140,7 +140,9 @@ class ChatSession:
 
     def parse_response(self, response: str) -> tuple[str, str]:
         """Split a raw bot reply into chat text and system thinking."""
-        # Primary delimiter based on explicit THINK tag
+        # Primary delimiter based on explicit THINK tag. When present we take the
+        # text before the marker as the user facing reply and everything after as
+        # raw logic output with no further parsing.
         if "[[THINK]]" in response:
             chat, logic = response.split("[[THINK]]", 1)
             return chat.strip(), logic.strip()
@@ -197,14 +199,15 @@ class ChatSession:
         return self.parse_response(str(response))
 
     def update_displays(self, chat_text: str, logic_text: str) -> None:
-        """Insert messages into the chat and logic panes via dispatcher."""
+        """Insert messages into the chat pane and raw logic into the bottom pane."""
         chat_msg = {"type": "assistant_response", "content": chat_text}
         self.messages.append(chat_msg)
         self.render_message(chat_msg)
+
+        # Logic text should not be treated as a persistent message. It is
+        # appended only to the logic box for debugging purposes.
         if logic_text:
-            sys_msg = {"type": "system_output", "content": logic_text}
-            self.messages.append(sys_msg)
-            self.render_message(sys_msg)
+            self._append_text(self.logic_box, logic_text + "\n")
 
     def handle_input(self, event=None) -> None:  # type: ignore[override]
         user_text = self.input_entry.get("1.0", tk.END).strip()
