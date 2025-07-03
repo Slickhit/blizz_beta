@@ -14,6 +14,8 @@ from modules import dashboard
 
 
 class ChatSession:
+    """Representation of a single chat session."""
+
     def __init__(self, gui: "BlizzGUI", parent: ttk.Notebook, session_id: int) -> None:
         self.gui = gui
         self.session_id = session_id
@@ -24,62 +26,48 @@ class ChatSession:
 
         opts = gui.common_opts
 
-        # ----- Chat display -----
+        # ----- Chat area -----
         chat_frame = tk.Frame(self.frame, bg="#1e1e1e")
         chat_frame.pack(fill="both", expand=True, padx=10, pady=(5, 0))
 
-        chat_opts = {
-            **opts,
-            "fg": "#ffffff",
-            "bg": "#000000",
-        }
-        self.chat_log = ScrolledText(chat_frame, state="disabled", **chat_opts, wrap=tk.WORD)
+        self.chat_log = ScrolledText(chat_frame, state="disabled", **opts)
         self.chat_log.pack(fill="both", expand=True)
 
-        # ----- Input + Send -----
-        input_frame = tk.Frame(self.frame, bg="#1e1e1e")
-        input_frame.pack(fill="x", padx=10, pady=(5, 5))
+        # ----- Input area -----
+        input_wrap = tk.Frame(self.frame, bg="#1e1e1e")
+        input_wrap.pack(fill="x", padx=10, pady=5)
 
-        self.input_entry = ScrolledText(input_frame, height=3, **opts, wrap=tk.WORD)
-        self.input_entry.configure(insertbackground="#00ffcc", relief=tk.FLAT)
-        self.input_entry.pack(side="left", fill="both", expand=True, padx=(0, 5))
+        self.input_entry = ScrolledText(input_wrap, height=3, **opts)
+        self.input_entry.configure(insertbackground="#00ffcc")
+        self.input_entry.pack(side="left", fill="both", expand=True)
 
         send_button = tk.Button(
-            input_frame,
-            text="→",
+            input_wrap,
+            text="Send",
             command=self.handle_input,
-            font=("Courier New", 12, "bold"),
-            bg="#00ffcc",
-            fg="#1e1e1e",
-            relief=tk.FLAT,
-            width=4
+            bg="#1e1e1e",
+            fg="#00ffcc",
         )
-        send_button.pack(side="right")
+        send_button.pack(side="left", padx=(5, 0))
 
-        # ----- Logic output -----
+        # ----- Logic area -----
         logic_frame = tk.Frame(self.frame, bg="#002244")
-        logic_frame.pack(side="top", fill="both", expand=True, padx=10, pady=(0, 5))
+        logic_frame.pack(fill="both", expand=True, padx=10, pady=(0, 5))
 
-        logic_opts = {
-            "font": ("Courier New", 10, "italic"),
-            "fg": "#00ffff",
-            "bg": "#002244",
-        }
-        self.logic_box = ScrolledText(logic_frame, height=8, state="disabled", **logic_opts, wrap=tk.WORD, relief=tk.FLAT)
+        logic_opts = {"font": ("Courier New", 11), "fg": "#dddddd", "bg": "#002244"}
+        self.logic_box = ScrolledText(logic_frame, height=10, state="disabled", **logic_opts)
         self.logic_box.pack(fill="both", expand=True)
 
         guidance_api.set_widget(self.logic_box)
 
         close_btn = tk.Button(
             self.frame,
-            text="× Close",
+            text="Close",
             command=self.close_session,
             bg="#1e1e1e",
-            fg="#ff6666",
-            relief=tk.FLAT,
-            font=("Courier New", 10, "bold")
+            fg="#00ffcc",
         )
-        close_btn.pack(side="top", fill="x", padx=10, pady=(0, 5))
+        close_btn.pack(padx=10, pady=(0, 5))
 
         self.load_history()
 
@@ -87,7 +75,9 @@ class ChatSession:
         if self.file_path.exists():
             self.file_path.unlink()
         msgs = chat_db.get_messages(self.session_id)
-        threading.Thread(target=summarizer.summarize_messages, args=(self.session_id, msgs)).start()
+        threading.Thread(
+            target=summarizer.summarize_messages, args=(self.session_id, msgs)
+        ).start()
         chat_db.delete_chat(self.session_id)
 
     def close_session(self) -> None:
@@ -122,6 +112,7 @@ class ChatSession:
         self.chat_log.configure(state="disabled")
 
     def parse_response(self, response: str) -> tuple[str, str]:
+        """Split a raw bot reply into chat text and system thinking."""
         suggestion = ""
         guidance = ""
         cleaned = response
@@ -143,9 +134,11 @@ class ChatSession:
             logic_parts.append(f"Guidance: {guidance}")
             guidance_api.push(f"Guidance: {guidance}")
 
-        return cleaned, "\n".join(logic_parts)
+        logic_text = "\n".join(logic_parts)
+        return cleaned, logic_text
 
     def structure_response(self, response: str | dict) -> tuple[str, str]:
+        """Handle structured dicts or raw strings for display."""
         if isinstance(response, dict):
             chat_txt = response.get("final_response", "")
             logic_parts = []
@@ -158,11 +151,12 @@ class ChatSession:
         return self.parse_response(str(response))
 
     def update_displays(self, chat_text: str, logic_text: str) -> None:
+        """Insert messages into the chat and logic panes."""
         self._append_text(self.chat_log, chat_text + "\n\n")
         if logic_text:
             self._append_text(self.logic_box, logic_text + "\n\n")
 
-    def handle_input(self, event=None) -> None:
+    def handle_input(self, event=None) -> None:  # type: ignore[override]
         user_text = self.input_entry.get("1.0", tk.END).strip()
         if not user_text:
             return
@@ -186,6 +180,7 @@ class ChatSession:
             }
             try:
                 from guidance import manager as guidance_manager
+
                 hint = guidance_manager.generate(command, response["final_response"])
                 if hint:
                     guidance_api.push(hint)
@@ -193,12 +188,15 @@ class ChatSession:
                 pass
         else:
             ctx_resp = generate_contextual_response(user_text)
-            response = {
-                "final_response": ctx_resp or "",
-                "thought_process": "",
-                "classifications": "",
-                "logic_notes": "",
-            } if ctx_resp is not None else handle_user_input(user_text)
+            if ctx_resp is not None:
+                response = {
+                    "final_response": ctx_resp,
+                    "thought_process": "",
+                    "classifications": "",
+                    "logic_notes": "",
+                }
+            else:
+                response = handle_user_input(user_text)
 
         chat_txt, logic_txt = self.structure_response(response)
         self.update_displays(f"Bot: {chat_txt}", logic_txt)
@@ -206,10 +204,37 @@ class ChatSession:
 
 
 class BlizzGUI:
+    """Tkinter interface supporting multiple chat sessions."""
+
     def __init__(self, root: tk.Tk) -> None:
         self.root = root
         root.title("Blizz Beta")
         root.configure(bg="#1e1e1e")
+
+        header = tk.Frame(root, bg="#1e1e1e")
+        header.pack(anchor="nw", pady=(5, 0))
+        logo_path = Path(__file__).resolve().parent.parent / "assets" / "blizz_netic_logo.png"
+        try:
+            self.logo_img = tk.PhotoImage(file=str(logo_path))
+            self.logo_small = self.logo_img.subsample(4, 4)
+            tk.Label(header, image=self.logo_small, bg="#1e1e1e").pack(side="left", padx=(10, 5))
+        except Exception:
+            tk.Label(header, text="Blizz", bg="#1e1e1e", fg="#00ffcc").pack(side="left", padx=(10, 5))
+
+        new_button = tk.Button(header, text="New Chat", command=self.add_session, bg="#1e1e1e", fg="#00ffcc")
+        new_button.pack(side="left")
+
+        scan_button = tk.Button(header, text="Scan", command=self.scan_prompt, bg="#1e1e1e", fg="#00ffcc")
+        scan_button.pack(side="left", padx=(5, 0))
+
+        sniper_button = tk.Button(header, text="Sn1per", command=self.sniper_prompt, bg="#1e1e1e", fg="#00ffcc")
+        sniper_button.pack(side="left", padx=(5, 0))
+
+        recall_button = tk.Button(header, text="Recall", command=self.recall_prompt, bg="#1e1e1e", fg="#00ffcc")
+        recall_button.pack(side="left", padx=(5, 0))
+
+        run_button = tk.Button(header, text="Run", command=self.run_prompt, bg="#1e1e1e", fg="#00ffcc")
+        run_button.pack(side="left", padx=(5, 0))
 
         self.common_opts = {
             "font": ("Courier New", 12),
@@ -219,11 +244,19 @@ class BlizzGUI:
 
         self.notebook = ttk.Notebook(root)
         self.notebook.pack(expand=True, fill="both")
+        self.notebook.bind("<<NotebookTabChanged>>", self._on_tab_change)
+
+        # Dashboard tab
+        self.dashboard = dashboard.GUIDashboard(self.notebook)
+        self.notebook.add(self.dashboard.frame, text="Dashboard")
+        dashboard.set_active_dashboard(self.dashboard)
 
         self.sessions: list[ChatSession] = []
         self.current_session: ChatSession | None = None
 
-        self.add_session()
+        self._rehydrate_sessions()
+        if not self.sessions:
+            self.add_session()
 
         root.bind("<Return>", lambda e: self.current_session.handle_input() if self.current_session else None)
 
@@ -246,7 +279,74 @@ class BlizzGUI:
         else:
             self.add_session()
 
-def main():
+    def _rehydrate_sessions(self) -> None:
+        sessions_dir = Path(__file__).resolve().parent.parent / "sessions"
+        for path in sorted(sessions_dir.glob("session_*.jsonl")):
+            sid = int(re.search(r"(\d+)", path.stem).group(1))
+            session = ChatSession(self, self.notebook, sid)
+            self.sessions.append(session)
+            self.notebook.add(session.frame, text=f"Chat {sid}")
+        if self.sessions:
+            self.notebook.select(self.sessions[0].frame)
+            self.current_session = self.sessions[0]
+            guidance_api.set_widget(self.current_session.logic_box)
+
+    def scan_prompt(self) -> None:
+        target = simpledialog.askstring("Scan", "Target?")
+        if not target:
+            return
+        cmd = f"!scan {target}"
+        if self.current_session:
+            self.current_session.input_entry.insert("1.0", cmd)
+            self.current_session.handle_input()
+
+    def sniper_prompt(self) -> None:
+        ip = simpledialog.askstring("Sn1per", "IP address?")
+        if not ip:
+            return
+        cmd = f"sniper {ip}"
+        if self.current_session:
+            self.current_session.input_entry.insert("1.0", cmd)
+            self.current_session.handle_input()
+
+    def recall_prompt(self) -> None:
+        ip = simpledialog.askstring("Recall", "IP address?")
+        if not ip:
+            return
+        cmd = f"recall {ip}"
+        if self.current_session:
+            self.current_session.input_entry.insert("1.0", cmd)
+            self.current_session.handle_input()
+
+    def run_prompt(self) -> None:
+        cmd = simpledialog.askstring("Run", "Command?")
+        if not cmd:
+            return
+        full_cmd = f"run {cmd}"
+        if self.current_session:
+            self.current_session.input_entry.insert("1.0", full_cmd)
+            self.current_session.handle_input()
+
+    def _on_tab_change(self, event=None) -> None:
+        idx = self.notebook.index("current")
+        if idx == self.notebook.index(self.dashboard.frame):
+            self.current_session = None
+            dashboard.set_active_dashboard(self.dashboard)
+        else:
+            session_idx = idx
+            if self.dashboard.frame in self.notebook.tabs():
+                session_idx -= 1
+            if 0 <= session_idx < len(self.sessions):
+                self.current_session = self.sessions[session_idx]
+                self.current_session.load_history()
+                guidance_api.set_widget(self.current_session.logic_box)
+
+
+def main() -> None:
     root = tk.Tk()
-    app = BlizzGUI(root)
+    BlizzGUI(root)
     root.mainloop()
+
+
+if __name__ == "__main__":
+    main()
