@@ -140,6 +140,11 @@ class ChatSession:
 
     def parse_response(self, response: str) -> tuple[str, str]:
         """Split a raw bot reply into chat text and system thinking."""
+        # Primary delimiter based on explicit THINK tag
+        if "[[THINK]]" in response:
+            chat, logic = response.split("[[THINK]]", 1)
+            return chat.strip(), logic.strip()
+
         suggestion = ""
         guidance = ""
         cleaned = response
@@ -174,6 +179,13 @@ class ChatSession:
     def structure_response(self, response: str | dict) -> tuple[str, str]:
         """Handle structured dicts or raw strings for display."""
         if isinstance(response, dict):
+            # Prefer explicit user_facing_response keys if provided
+            if "user_facing_response" in response or "bot_logic_output" in response:
+                return (
+                    response.get("user_facing_response", ""),
+                    response.get("bot_logic_output", ""),
+                )
+
             chat_txt = response.get("final_response", "")
             logic_parts = []
             for key in ("thought_process", "classifications", "logic_notes"):
