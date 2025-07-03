@@ -18,7 +18,7 @@ class ChatSession:
     """Representation of a single chat session."""
 
     _INSTRUCTION_PREFIXES = (
-        "Bot: The main bot should respond",
+        "Bot: The main bot should",
     )
 
     def __init__(self, gui: "BlizzGUI", parent: ttk.Notebook, session_id: int) -> None:
@@ -153,8 +153,9 @@ class ChatSession:
 
         # Entire response is leaked instructions
         stripped = response.strip()
+        stripped_lower = stripped.lower()
         for pref in self._INSTRUCTION_PREFIXES:
-            if stripped.startswith(pref):
+            if stripped_lower.startswith(pref.lower()):
                 return "", stripped
 
         # Fallback for "Bot: Bot:" style thinking. If present treat everything

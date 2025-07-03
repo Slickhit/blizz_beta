@@ -88,3 +88,11 @@ def test_instruction_prefix_routed_to_logic():
     chat, logic = session.parse_response(instr)
     assert chat == ""
     assert logic == instr
+
+
+def test_instruction_prefix_extended_pattern():
+    session = make_session()
+    instr = "Bot: The main bot should address the user"
+    chat, logic = session.parse_response(instr)
+    assert chat == ""
+    assert logic == instr
